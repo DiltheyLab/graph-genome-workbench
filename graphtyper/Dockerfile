@@ -13,6 +13,7 @@ LABEL about.documentation="https://github.com/DecodeGenetics/graphtyper"
 LABEL about.license_file="https://github.com/DecodeGenetics/graphtyper"
 LABEL about.license="SPDX:GPL-3.0"
 LABEL about.tags="Genomics"
+LABEL extra.binaries="/usr/bin/sickle"
 
 ################## MAINTAINER ######################
 MAINTAINER Torsten Houwaart <houwaart@hhu.du>
@@ -21,9 +22,9 @@ MAINTAINER Torsten Houwaart <houwaart@hhu.du>
 USER root
 WORKDIR /app
 RUN wget https://github.com/DecodeGenetics/graphtyper/releases/download/v2.0-beta/graphtyper
-RUN chmod a+x graphtyper
+RUN chmod a+x graphtyper &&  mv graphtyper /usr/bin/
 USER biodocker
 
 
 ################## RUN ######################
-CMD ./graphtyper --help
+#CMD ./graphtyper --help
