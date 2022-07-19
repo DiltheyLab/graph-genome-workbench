@@ -1,7 +1,3 @@
-<<<<<<< HEAD
 remote_theme: pages-themes/modernist@v0.2.0
 plugins:
   - jekyll-remote-theme 
-=======
-theme: jekyll-theme-leap-day
->>>>>>> 1510b155b2b5fa5cabdc9f44ce0f571c6e592e94
