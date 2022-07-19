@@ -30,3 +30,7 @@ var fun = function lang(l) {
 }
 ```
 
+
+### Large image
+
+![GGW_logo](/denbi_gg/logo_grey.png)

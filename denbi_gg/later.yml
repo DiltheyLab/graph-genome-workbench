@@ -1,0 +1,43 @@
+---
+- hosts: all
+  vars:
+    home_path: /home/ubuntu
+    wfmash_version: v0.8.2
+    seqwish_version: v0.7.5
+    smoothxg_version: v0.6.4
+    gfaffix_version: 0.1.3
+    pggb_version: 0.3.1
+    cactus_version: v2.1.0
+    igv_version: 2.13.0
+    snpeff_version: v4_3t
+    pangenie_version: 1.0.0
+    minimap2_version: 2.24
+    miniasm_version: 0.3
+    odgi_version: 0.7.2
+    minigraph_version: 0.19
+  tasks:
+    - name: Download minigraph.
+      ansible.builtin.get_url:
+        url: 'https://github.com/lh3/minigraph/archive/refs/tags/v{{ minigraph_version }}.tar.gz'
+        dest: /tmp/minigraph.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip minigraph.
+      ansible.builtin.unarchive:
+        src: /tmp/minigraph.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Build minigraph.
+      command: make
+      args: 
+        chdir: '/tmp/minigraph-{{ minigraph_version}}'
+        creates: '/tmp/minigraph-{{ minigraph_version }}/minigraph'
+    - name: Copy minigraph to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/minigraph-{{ minigraph_version }}/minigraph'
+        dest: /usr/local/bin/minigraph
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'

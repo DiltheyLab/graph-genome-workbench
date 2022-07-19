@@ -1,0 +1,425 @@
+---
+- hosts: all
+  vars:
+    home_path: /home/ubuntu
+    miniconda_version: py39_4.12.0
+    wfmash_version: v0.8.2
+    seqwish_version: v0.7.5
+    smoothxg_version: v0.6.4
+    gfaffix_version: 0.1.3
+    pggb_version: 0.3.1
+    cactus_version: v2.1.0
+    igv_version: 2.13.0
+    snpeff_version: v4_3t
+    pangenie_version: 1.0.0
+    minimap2_version: 2.24
+    miniasm_version: 0.3
+    minigraph_version: 0.19
+    vg_version: v1.41.0
+    graphtyper2_version: v2.7.4
+    odgi_version: 0.7.2
+  tasks:
+    - name: Download miniconda.
+      ansible.builtin.get_url:
+        url: 'https://repo.anaconda.com/miniconda/Miniconda3-{{ miniconda_version }}-Linux-x86_64.sh'
+        dest: /tmp/miniconda3.sh
+        mode: 0744
+    - name: Install miniconda.
+      ansible.builtin.command: >
+        /tmp/miniconda3.sh -b -f -p /home/ubuntu/miniconda3
+      args:
+        creates: /home/ubuntu/miniconda3/bin/conda
+    - name: Install apt packages.
+      become: true
+      ansible.builtin.apt:
+        update_cache: yes
+        pkg: 
+          - build-essential
+          - cmake 
+          - libgsl-dev
+          - libhts-dev
+          - libjemalloc-dev
+          - libz-dev
+          - libzstd-dev
+          - python3-distutils 
+          - python3-dev
+          - pkg-config
+          - unzip
+    - name: Download pangenie.
+      ansible.builtin.get_url:
+        url: 'https://github.com/eblerjana/pangenie/archive/refs/tags/v{{ pangenie_version }}.tar.gz'
+        dest: /tmp/pangenie.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip pangenie.
+      ansible.builtin.unarchive:
+        src: /tmp/pangenie.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Install pangenie.
+      command: '{{ home_path }}/miniconda3/bin/conda env create -f environment.yml'
+      args:
+        chdir: '/tmp/pangenie-{{ pangenie_version }}'
+        creates: '{{ home_path }}/miniconda3/envs/pangenie/bin/cpp'
+    - name: Create build directory.
+      ansible.builtin.file:
+        path: '/tmp/pangenie-{{ pangenie_version }}/build'
+        state: directory
+        mode: '0755'
+    - shell: 'source {{ home_path }}/miniconda3/etc/profile.d/conda.sh && conda activate pangenie && cmake .. && make'
+      args:
+        executable: /bin/bash
+        chdir: '/tmp/pangenie-{{ pangenie_version }}/build'
+        creates: '/tmp/pangenie{{ pangenie_version }}/build/src/PanGenie'
+    - name: Copy pangenie to path 1/2.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/pangenie-{{ pangenie_version }}/build/src/PanGenie'
+        dest: /usr/local/bin/Pangenie
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Copy pangenie to path 2/2.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/pangenie-{{ pangenie_version }}/build/src/PanGenie-graph'
+        dest: /usr/local/bin/Pangenie-graph
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download minimap2.
+      ansible.builtin.get_url:
+        url: 'https://github.com/lh3/minimap2/releases/download/v2.24/minimap2-{{ minimap2_version }}_x64-linux.tar.bz2'
+        dest: /tmp/minimap2.tar.bz2
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip minimap2.
+      ansible.builtin.unarchive:
+        src: /tmp/minimap2.tar.bz2
+        dest: /tmp/
+        remote_src: true
+    - name: Copy minimap2 to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/minimap2-{{ minimap2_version }}_x64-linux/minimap2'
+        dest: /usr/local/bin/minimap2
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download miniasm.
+      ansible.builtin.get_url:
+        url: 'https://github.com/lh3/miniasm/archive/refs/tags/v{{ miniasm_version }}.tar.gz'
+        dest: /tmp/miniasm.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip miniasm.
+      ansible.builtin.unarchive:
+        src: /tmp/miniasm.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Build miniasm.
+      command: make
+      args: 
+        chdir: '/tmp/miniasm-{{ miniasm_version }}'
+        creates: '/tmp/miniasm- {{ miniasm_version }}/miniasm'
+    - name: Copy miniasm to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/miniasm-{{ miniasm_version }}/miniasm'
+        dest: /usr/local/bin/miniasm
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download vg.
+      become: true
+      get_url:
+        url: 'https://github.com/vgteam/vg/releases/download/{{ vg_version }}/vg'
+        dest: /usr/local/bin/vg
+        owner: ubuntu
+        mode: 0755
+    - name: Download graphtyper2.
+      become: true
+      get_url:
+        url: 'https://github.com/DecodeGenetics/graphtyper/releases/download/{{ graphtyper2_version }}/graphtyper'
+        dest: /usr/local/bin/graphtyper
+        owner: ubuntu
+        mode: 0755
+    - name: Clone odgi from github.
+      ansible.builtin.git:
+        repo: 'https://github.com/pangenome/odgi.git'
+        dest: '{{ home_path }}/odgi'
+        recursive: true
+    - name: Make odgi 1/2.
+      ansible.builtin.command: cmake -DBUILD_STATIC=1 -H. -Bbuild 
+      args:
+        chdir: '/tmp/odgi'
+        creates: '/tmp/odgi/build/Makefile'
+    - name: Make odgi 2/2.
+      ansible.builtin.command: cmake --build build -- -j 3
+      args:
+        chdir: '/tmp/odgi'
+        creates: '/tmp/odgi/bin/odgi'
+    - name: Copy odgi to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/odgi/bin/odgi'
+        dest: /usr/local/bin/odgi
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Get Bandage.
+      ansible.builtin.get_url:
+        url: https://github.com/rrwick/Bandage/releases/download/v0.8.1/Bandage_Ubuntu_dynamic_v0_8_1.zip
+        dest: /tmp/Bandage.zip
+        mode: 0744
+    - name: Unzip Bandage.
+      ansible.builtin.unarchive:
+        src: /tmp/Bandage.zip
+        dest: /tmp/
+        remote_src: true
+    - name: Copy Bandage to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/Bandage'
+        dest: /usr/local/bin/Bandage
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Install x server.
+      become: true
+      ansible.builtin.apt:
+        pkg: 
+          - xorg
+          - qt5-default
+    - name: Download minigraph.
+      ansible.builtin.get_url:
+        url: 'https://github.com/lh3/minigraph/archive/refs/tags/v{{ minigraph_version }}.tar.gz'
+        dest: /tmp/minigraph.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip minigraph.
+      ansible.builtin.unarchive:
+        src: /tmp/minigraph.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Build minigraph.
+      command: make
+      args: 
+        chdir: '/tmp/minigraph-{{ minigraph_version}}'
+        creates: '/tmp/minigraph-{{ minigraph_version }}/minigraph'
+    - name: Copy minigraph to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/minigraph-{{ minigraph_version }}/minigraph'
+        dest: /usr/local/bin/minigraph
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download seqwish.
+      ansible.builtin.get_url:
+        url: 'https://github.com/ekg/seqwish/releases/download/{{ seqwish_version }}/seqwish-{{ seqwish_version }}.tar.gz'
+        dest: /tmp/seqwish.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip seqwish.
+      ansible.builtin.unarchive:
+        src: /tmp/seqwish.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Make seqwish 1/2.
+      ansible.builtin.command: cmake -H. -Bbuild 
+      args:
+        chdir: '/tmp/seqwish-{{ seqwish_version }}'
+        creates: '/tmp/seqwish-{{ seqwish_version}}/build/Makefile'
+    - name: Make seqwish 2/2.
+      ansible.builtin.command: cmake --build build -- -j 3
+      args:
+        chdir: '/tmp/seqwish-{{ seqwish_version }}'
+        creates: '/tmp/seqwish-{{ seqwish_version }}/bin/seqwish'
+    - name: Copy seqwish to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/seqwish-{{ seqwish_version }}/bin/seqwish'
+        dest: /usr/local/bin/seqwish
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download smoothxg.
+      ansible.builtin.get_url:
+        url: 'https://github.com/pangenome/smoothxg/releases/download/{{ smoothxg_version }}/smoothxg-{{ smoothxg_version }}.tar.gz'
+        dest: /tmp/smoothxg.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip smoothxg.
+      ansible.builtin.unarchive:
+        src: /tmp/smoothxg.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Make smoothxg.
+      ansible.builtin.command: cmake -H. -Bbuild 
+      args:
+        chdir: '/tmp/smoothxg-{{ smoothxg_version }}'
+        creates: '/tmp/smoothxg-{{ smoothxg_version}}/build/Makefile'
+    - name: Make smoothxg 2.
+      ansible.builtin.command: cmake --build build -- -j 3
+      args:
+        chdir: '/tmp/smoothxg-{{ smoothxg_version }}'
+        creates: '/tmp/smoothxg-{{ smoothxg_version }}/bin/smoothxg'
+    - name: Copy smoothxg to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/smoothxg-{{ smoothxg_version }}/bin/smoothxg'
+        dest: /usr/local/bin/smoothxg
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download wfmash.
+      ansible.builtin.get_url:
+        url: 'https://github.com/waveygang/wfmash/releases/download/{{ wfmash_version }}/wfmash-{{ wfmash_version }}.tar.gz'
+        dest: /tmp/wfmash.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip wfmash.
+      ansible.builtin.unarchive:
+        src: /tmp/wfmash.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Make wfmash.
+      ansible.builtin.command: cmake -H. -Bbuild 
+      args:
+        chdir: '/tmp/wfmash-{{ wfmash_version }}'
+        creates: '/tmp/wfmash-{{ wfmash_version}}/build/Makefile'
+    - name: Make wfmash 2.
+      ansible.builtin.command: cmake --build build -- -j 3
+      args:
+        chdir: '/tmp/wfmash-{{ wfmash_version }}'
+        creates: '/tmp/wfmash-{{ wfmash_version }}/build/bin/wfmash'
+    - name: Copy wfmash to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/wfmash-{{ wfmash_version }}/build/bin/wfmash'
+        dest: /usr/local/bin/wfmash
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download gfaffix.
+      ansible.builtin.get_url:
+        url: 'https://github.com/marschall-lab/GFAffix/releases/download/{{ gfaffix_version }}/GFAffix-{{  gfaffix_version }}_linux_x86_64.tar.gz'
+        dest: /tmp/gfaffix.tar.gz
+        mode: 0744
+    - name: Unzip gfaffix.
+      ansible.builtin.unarchive:
+        src: /tmp/gfaffix.tar.gz
+        dest: /tmp
+        remote_src: true
+    - name: Copy gfaffix to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/GFAffix-{{ gfaffix_version }}/gfaffix'
+        dest: /usr/local/bin/gfaffix
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download pggb.
+      ansible.builtin.get_url:
+        url: 'https://github.com/pangenome/pggb/archive/refs/tags/v{{ pggb_version }}.tar.gz'
+        dest: /tmp/pggb.tar.gz
+        mode: 0744
+    - name: Unzip pggb.
+      ansible.builtin.unarchive:
+        src: /tmp/pggb.tar.gz
+        dest: /tmp
+        remote_src: true
+    - name: Copy pggb to path.
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/pggb-{{ pggb_version }}/pggb'
+        dest: /usr/local/bin/pggb
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download cactus.
+      ansible.builtin.get_url:
+        url: 'https://github.com/ComparativeGenomicsToolkit/cactus/releases/download/{{ cactus_version }}/cactus-bin-{{ cactus_version}}.tar.gz'
+        dest: /tmp/cactus.tar.gz
+        mode: 0744
+    - name: Unzip cactus.
+      ansible.builtin.unarchive:
+        src: /tmp/cactus.tar.gz
+        dest: /tmp
+        remote_src: true
+    # cactus is too involved to be installed side-by-side to the other software.
+    # It needs its own environment, which will be built in conda
+    # and its name is: cactus
+    - name: Initialise cactus environment.
+      ansible.builtin.shell: 'source {{ home_path }}/miniconda3/etc/profile.d/conda.sh && conda create -y -n cactus python=3.8'
+      args:
+        executable: /bin/bash
+        creates: '{{ home_path }}/miniconda3/envs/cactus'
+    # This is probably a bit hacky but in this environment the binaries 
+    # that came with the cactus release should be used
+    - name: List all binaries.
+      ansible.builtin.find:
+        paths: '/tmp/cactus-bin-{{ cactus_version }}/bin/'
+        patterns: "*"
+      register: bin_glob
+    - name: Copy each binary.
+      ansible.builtin.copy:
+        src: '{{ item.path }}'
+        dest: '{{ home_path }}/miniconda3/envs/cactus/bin'
+        remote_src: true
+        owner: 'ubuntu'
+        mode: 0755
+      with_items:
+        - "{{ bin_glob.files }}"
+    - name: Install specific pip, toil and this package.
+      ansible.builtin.shell: 'source {{ home_path }}/miniconda3/etc/profile.d/conda.sh && conda activate cactus && python3 -m pip install -U setuptools pip==21.3.1 && python3 -m pip install -U -r ./toil-requirement.txt && python3 -m pip install -U .'
+      args:
+        executable: /bin/bash
+        chdir : '/tmp/cactus-bin-{{ cactus_version }}'
+    - name: Download IGV.
+      ansible.builtin.get_url:
+        url: 'https://data.broadinstitute.org/igv/projects/downloads/2.13/IGV_Linux_{{ igv_version }}_WithJava.zip'
+        dest: /tmp/igv.zip
+        mode: 0744
+    - name: Unzip IGV.
+      ansible.builtin.unarchive:
+        src: /tmp/igv.zip
+        dest: '{{ home_path }}'
+        remote_src: true
+    - name: Make symlink for IGV.
+      become: true
+      ansible.builtin.file:
+        src: '{{ home_path }}/IGV_Linux_{{ igv_version }}/igv.sh'
+        path: '/usr/local/bin/IGV'
+        state: link
+        owner: ubuntu
+    - name: Make symlink for java.
+      become: true
+      ansible.builtin.file:
+        src: '{{ home_path }}/IGV_Linux_{{ igv_version }}/jdk-11/bin/java'
+        path: '/usr/local/bin/java'
+        state: link
+        owner: ubuntu
+    - name: Download SnpEff.
+      ansible.builtin.get_url:
+        url: 'https://netcologne.dl.sourceforge.net/project/snpeff/snpEff_{{  snpeff_version }}_core.zip'
+        dest: /tmp/snpeff.zip
+        mode: 0744
+    - name: Unzip SnpEff.
+      ansible.builtin.unarchive:
+        src: /tmp/snpeff.zip
+        dest: '{{ home_path }}'
+        remote_src: true
