@@ -6,7 +6,7 @@ layout: default
 
 ## Software
 
-This is a list of software that is being installed when you use this image.
+This is a list of software that is being installed when you use this image. If you have any issues using this playbook on a deNBI virtual machine or any other system, please write an [issue](https://github.com/DiltheyLab/graph-genome-workbench/issues).
 
 | software      | command line |
 |:--------------|:-------------|
@@ -20,7 +20,7 @@ This is a list of software that is being installed when you use this image.
 | [graphtyper2](https://github.com/DecodeGenetics/graphtyper) | `graphtyper` |
 | [Bandage](https://github.com/rrwick/Bandage) | `Bandage` |
 | [Seqwish](https://github.com/ekg/seqwish) | `seqwish` |
-| [Gfaffix](https://github.com/marschall-lab/GFAffix) | `graffix` |
+| [Gfaffix](https://github.com/marschall-lab/GFAffix) | `gfaffix` |
 | [Smoothxg](https://github.com/pangenome/smoothxg) | `smoothxg` |
 | [Wfmash](https://github.com/waveygang/wfmash) | `wfmash` |
 | [Pggb](https://github.com/pangeonme/pggb) | `pggb` |
