@@ -17,7 +17,7 @@
     minigraph_version: 0.19
     vg_version: v1.41.0
     graphtyper2_version: v2.7.4
-    odgi_version: 0.7.2
+    odgi_version: v0.7.3
   tasks:
     - name: Download miniconda.
       ansible.builtin.get_url:
@@ -148,25 +148,32 @@
         dest: /usr/local/bin/graphtyper
         owner: ubuntu
         mode: 0755
-    - name: Clone odgi from github.
-      ansible.builtin.git:
-        repo: 'https://github.com/pangenome/odgi.git'
-        dest: '{{ home_path }}/odgi'
-        recursive: true
+    - name: Download odgi.
+      become: true
+      get_url:
+        url: 'https://github.com/pangenome/odgi/releases/download/{{ odgi_version }}/odgi-{{ odgi_version }}.tar.gz'
+        dest: /tmp/odgi.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip odgi.
+      ansible.builtin.unarchive:
+        src: /tmp/odgi.tar.gz
+        dest: /tmp/
+        remote_src: true
     - name: Make odgi 1/2.
       ansible.builtin.command: cmake -DBUILD_STATIC=1 -H. -Bbuild 
       args:
-        chdir: '/tmp/odgi'
-        creates: '/tmp/odgi/build/Makefile'
+        chdir: '/tmp/odgi-{{ odgi_version }}'
+        creates: '/tmp/odgi-{{ odgi_version }}/build/Makefile'
     - name: Make odgi 2/2.
       ansible.builtin.command: cmake --build build -- -j 3
       args:
-        chdir: '/tmp/odgi'
-        creates: '/tmp/odgi/bin/odgi'
+        chdir: '/tmp/odgi-{{ odgi_version }}'
+        creates: '/tmp/odgi- {{odgi_version }}/bin/odgi'
     - name: Copy odgi to path.
       become: true
       ansible.builtin.copy:
-        src: '/tmp/odgi/bin/odgi'
+        src: '/tmp/odgi-{{ odgi_version }}/bin/odgi'
         dest: /usr/local/bin/odgi
         remote_src: true
         owner: ubuntu
