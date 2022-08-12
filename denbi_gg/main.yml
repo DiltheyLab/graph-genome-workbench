@@ -18,6 +18,8 @@
     vg_version: v1.41.0
     graphtyper2_version: v2.7.4
     odgi_version: v0.7.3
+    novograph_version: 1.0.0
+    htslib_version: 1.15.1
   tasks:
     - name: Download miniconda.
       ansible.builtin.get_url:
@@ -430,3 +432,56 @@
         src: /tmp/snpeff.zip
         dest: '{{ home_path }}'
         remote_src: true
+    - name: Install apt packages for NovoGraph.
+      become: true
+      ansible.builtin.apt:
+        update_cache: yes
+        pkg: 
+          - cpanminus
+          - libbz2-dev
+          - libcurl4-gnutls-dev
+    - name: Download HTSLib.
+      ansible.builtin.get_url:
+        url: 'https://github.com/samtools/htslib/releases/download/{{ htslib_version }}/htslib-{{ htslib_version }}.tar.bz2'
+        dest: /tmp/htslib.tar.bz2
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip HTSLib.
+      ansible.builtin.unarchive:
+        src: /tmp/htslib.tar.bz2
+        dest: /tmp/
+        remote_src: true
+    - name: Build HTSLib.
+      command: make
+      args: 
+        chdir: '/tmp/htslib-{{ htslib_version }}'
+        creates: '/tmp/htslib-{{ htslib_version }}/libhts.so'
+    - name: Install HTSLib.
+      command: make install 
+      become: true
+      args: 
+        chdir: '/tmp/htslib-{{ htslib_version }}'
+    - name: Download NovoGraph.
+      ansible.builtin.get_url:
+        url: 'https://github.com/NCBI-Hackathons/NovoGraph/archive/refs/tags/v{{ novograph_version }}.tar.gz'
+        dest: /tmp/novograph.tar.gz
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip NovoGraph.
+      ansible.builtin.unarchive:
+        src: /tmp/novograph.tar.gz
+        dest: /tmp/
+        remote_src: true
+    - name: Build CRAM2VCF.
+      command: make
+      args: 
+        chdir: '/tmp/NovoGraph-{{ novograph_version }}/src'
+        creates: '/tmp/NovoGraph-{{ novograph_version }}/src/CRAM2VCF'
+    - name: Install Bio::SeqFeature::Lite perl package
+      become: true
+      community.general.cpanm:
+        name: Bio::SeqFeature::Lite
+    - name: Install Bio::DB::HTS perl package
+      become: true
+      community.general.cpanm:
+        name: Bio::DB::HTS
