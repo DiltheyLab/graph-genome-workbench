@@ -1,6 +1,6 @@
-[denbi_vm]
-134.176.27.78  
+[preciseHopper]
+preciseHopper1
+preciseHopper2
 
-[denbi_vm:vars]
-ansible_port=30222
-ansible_user=ubuntu
+[denbi_vms:children]
+preciseHopper
