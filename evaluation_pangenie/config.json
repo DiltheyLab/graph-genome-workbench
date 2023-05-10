@@ -1,0 +1,16 @@
+{
+	"reference": "downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa",
+	"truthvcf": "downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+	"truthvcf_idx": "downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
+	"input_pangenome_graph": "downloaded/vcf/HGSVC-GRCh38/Pangenome_graph_freeze3_64haplotypes.vcf.gz",
+	"genotyped_sample_vcf": "genotyping/NA24385_genotyping.vcf.gz",
+	"reference_sdf_dir": "downloaded/SDF/",
+	"sample": "NA24385",
+	"reads": "downloaded/reads/NA24385/raw_reads.fastq.gz",
+	"pangenie" : "/usr/local/bin/PanGenie",
+	"rtg": "/home/ubuntu/rtg-tools-3.12.1/rtg"
+}
+
+
+
+
