@@ -4,12 +4,14 @@ In order to execute the playbook, we need to set up the following 4 steps:
 
 - Create an entry in your SSH configuration file (located at `~/.ssh/config`) in order to register the hostnames of the VMs in the deNBI Cloud and access them more quickly through SSH (without specifying passwords at every log in). An example for such an entry goes as follows:
 
-Host `nickname_to_access_this_host`
-    HostName `VM_IP_address`
-    User `ubuntu`
-    AddKeysToAgent `yes`
-    IdentityFile `/path/to/private_key/for/deNBI_Cloud`
-    Port `port_to_connect_to_VM`
+```
+Host nickname_to_access_this_host
+    HostName VM_IP_address
+    User ubuntu
+    AddKeysToAgent yes
+    IdentityFile /path/to/private_key/for/deNBI_Cloud
+    Port port_to_connect_to_VM
+```
 
 Please feel free to adapt the values `name_to_access_this_host`, `VM_IP_address`, `/path/to/private_key/for/deNBI_Cloud` and `port_to_connect_to_VM` to your specific situation.   
 
