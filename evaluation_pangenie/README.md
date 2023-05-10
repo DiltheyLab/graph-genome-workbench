@@ -13,3 +13,6 @@ Additionally, the `config.json` contains the paths to store our data and `run_pi
 
 We used a highmem large VM (i.e. 28 VCPUs and 256 GB RAM) in the deNBI Cloud. The runtime took approximately 20-30 minutes to download the data, 4 hours for the genotyping step and 2 minutes for evaluation. More specifically, we ran PanGenie with 24 threads for the counting kmers step and 24 threads for genotyping the chromosomes with the core algorithm. Total maximum memory usage increased up to 86 GB. Furthermore, we recommend executing this example pipeline in a volume so that there is enough disk space (downloaded data consumed 400GB+ when reads were unzipped for the genotyping step).
 
+### Results
+
+The measured performance of our evaluation is shown in [summary.txt](summary.txt) 
