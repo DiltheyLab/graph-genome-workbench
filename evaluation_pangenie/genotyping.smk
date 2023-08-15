@@ -1,3 +1,4 @@
+### Genotyping step
 configfile: "config.json"
 
 pangenie = config['pangenie']

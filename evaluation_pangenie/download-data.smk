@@ -1,3 +1,4 @@
+### Downloading data step
 configfile: "config.json"
 
 include: "rules/download-references.smk"
