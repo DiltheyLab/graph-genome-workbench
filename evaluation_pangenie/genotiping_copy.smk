@@ -31,9 +31,6 @@ rule all:
         #expand("genotyping/{sample}/{tool}/{sample}/{graphtypervariant}/genotyping.chr{chrom}.vcf.gz", sample=samples, graphtypervariant=graphtypervariants, tool=tools, chrom=chroms)
 
 
-
-
-
 ### Add uncompress all vcfs and extract sample from panel reference (in case of one-leave-out experiments)
 # uncompress vcf
 rule uncompress_vcfs:
@@ -139,7 +136,10 @@ rule graphtyper_genotype:
         fi
         tabix -f -p vcf {output.vcf} > {output.tbi}
         """
-        
+
+
+### include graphtyper postprocessing: merging of vcf files  
+## final output: genotyping/{tool}/{sample}_genotyping_{graphtypervariant}.vcf.gz
 
 rule merge_vcfs_all_chromosomes:
     input:
@@ -296,23 +296,9 @@ rule bcftools_concat_units:
 ### NOTE: Be sure of convert genotyped files to biallelic before extracting variants
 ### GraphTyper's output is already biallelic, but not for BayesTyper and PanGenie 
 
-rule convert_genotyped_to_biallelic:
-    input:
-        callset="downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf", 
-        graph="genotyping/{sample}/{tool}/{sample}_genotyping.vcf"
-    output:
-        biallelic="genotyping/{sample}/{tool}/{sample}_genotyping_biallelic.vcf.gz"
-    shell: 
-        """
-        cat {input.graph} | python3 scripts/annotate.py {input.callset} | python3 scripts/convert-to-biallelic.py {input.callset} | bgzip -c > {output.biallelic}
-        tabix -f -p vcf {output.biallelic}
-        """
-
-
-
 rule split_variants_and_compress_genotyped:
 	input:
-		vcf="genotyping/{sample}/{tool}/{sample}_genotyping_biallelic.vcf"
+		vcf="genotyping/{sample}/{tool}/{sample}_genotyping.vcf"
 	output:
 		splitted_vcf="genotyping/{sample}/{tool}/genotyping_{variant}.vcf.gz" 
 	shell:
@@ -320,5 +306,3 @@ rule split_variants_and_compress_genotyped:
 		cat {input.vcf} | python3 scripts/extract-varianttype.py {wildcards.variant} | bgzip > {output.splitted_vcf}
 		tabix -p vcf {output}
 		"""
-
-

@@ -88,89 +88,40 @@ rule download_HPRC_CHM13_88haplotypes_callset:
         tabix -f -p vcf {output.callset} > {output.callset_tbi}
         """
 
-rule annotate_graph:
+
+rule annotate_and_biallelic_graph:
     input:
-        callset="downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf", 
+        callset="downzloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf", 
         graph="downloaded/vcf/HGSVC-GRCh38/Pangenome_graph_freeze3_64haplotypes.vcf"
     output:
         annotated="downloaded/vcf/HGSVC-GRCh38/graph_annotated.vcf.gz",
+        biallelic="downloaded/vcf/HGSVC-GRCh38/graph_annotated_biallelic.vcf.gz"
     shell: 
         """
         cat {input.graph} | python3 {scripts}/annotate.py {input.callset} | bgzip -c > {output.annotated}
         tabix -f -p vcf {output.annotated}
+        cat {output.annotated} | python3 scripts/convert-to-biallelic.py {input.callset} | bgzip -c > {output.biallelic}
+		tabix -f -p vcf {output.biallelic}
         """
-
-#rule annotate_and_biallelic_graph:
-#    input:
-#        callset="downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf", 
-#        graph="downloaded/vcf/HGSVC-GRCh38/Pangenome_graph_freeze3_64haplotypes.vcf"
-#    output:
-#        annotated="downloaded/vcf/HGSVC-GRCh38/graph_annotated.vcf.gz",
-#        biallelic="downloaded/vcf/HGSVC-GRCh38/graph_annotated_biallelic.vcf.gz"
-#    shell: 
-#        """
-#        cat {input.graph} | python3 {scripts}/annotate.py {input.callset} | bgzip -c > {output.annotated}
-#        tabix -f -p vcf {output.annotated}
-#        cat {output.annotated} | python3 scripts/convert-to-biallelic.py {input.callset} | bgzip -c > {output.biallelic}
-#		tabix -f -p vcf {output.biallelic}
-#        """
 
 rule extract_sample:
     input:
-        vcf="downloaded/vcf/HGSVC-GRCh38/graph_annotated.vcf.gz"
-        #vcf=lambda wildcards: config['graph'] if wildcards.mode == 'multiallelic' else config['biallelic']
+        vcf=lambda wildcards: config['graph'] if wildcards.mode == 'multiallelic' else config['biallelic']
+        #vcf="downloaded/vcf/HGSVC-GRCh38/graph_annotated.vcf.gz"
     output:
-        vcf="downloaded/vcf/HGSVC-GRCh38/graph_annotated_{subset}.vcf.gz",
-        #vcf="downloaded/vcf/HGSVC-GRCh38/graph_annotated_{mode}_{subset}.vcf.gz",
-    wildcard_constraints:
-        subset = "|".join([s for s in subset_to_samples.keys()]), 
+        vcf="downloaded/vcf/HGSVC-GRCh38/graph_annotated_{mode}_{subset}.vcf.gz",
+    #wildcard_constraints:
+    #    subset = "|".join([s for s in subset_to_samples.keys()]), 
     #    mode = "multiallelic|biallelic"
     params:
         samples = lambda wildcards : subset_to_samples[wildcards.subset]
     log:
-        "downloaded/vcf/HGSVC-GRCh38/extract_{subset}.log"
+        "downloaded/vcf/HGSVC-GRCh38/extract_{subset}_{mode}.log"
     shell:
         """
         bcftools view -s {params.samples} {input.vcf} | bcftools view --min-ac 1 | bgzip -c > {output.vcf}
         tabix -f -p vcf {output.vcf}
         """
-
-rule convert_to_biallelic_graph:
-    input:
-        callset="downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf", 
-        graph="downloaded/vcf/HGSVC-GRCh38/graph_annotated_{subset}.vcf"
-    output:
-        biallelic="downloaded/vcf/HGSVC-GRCh38/graph_annotated_{subset}_biallelic.vcf.gz"
-    shell: 
-        """
-        cat {input.graph} | python3 scripts/convert-to-biallelic.py {input.callset} | bgzip -c > {output.biallelic}
-		tabix -f -p vcf {output.biallelic}
-        """
-
-
-rule split_variants_leaveoneout_set:
-    input:
-        vcf="downloaded/vcf/HGSVC-GRCh38/graph_annotated_{subset}_biallelic.vcf.gz"
-    output:
-        vcf="downloaded/vcf/HGSVC-GRCh38/graph_annotated_{subset}_biallelic_{variant}.vcf.gz"
-    wildcard_constraints:
-        subset = "|".join([s for s in subset_to_samples.keys() if 'only' in s])
-    shell:
-        """
-        zcat {input.vcf} | python3 scripts/extract-varianttype.py {wildcards.variant} | bgzip > {output.vcf}
-		tabix -p vcf {output.vcf}
-        """ 
-
-rule untypable_ids:
-	input:
-		vcf="downloaded/vcf/HGSVC-GRCh38/graph_biallelic.vcf.gz"
-	output:
-		lists=expand("downloaded/vcf/HGSVC-GRCh38/untypable-ids/{sample}-untypable.tsv", sample=sample),
-		summary= "downloaded/vcf/HGSVC-GRCh38/all-untypable-ids.tsv"
-	params:
-		out= "downloaded/vcf/HGSVC-GRCh38/untypable-ids"
-	shell:
-		"zcat {input} | python3 {scripts}/untypable-ids.py {params.out} > {output.summary}"
 
 ########################################################################################
 rule reduced_graph:
@@ -209,7 +160,6 @@ rule uncompress_vcfs:
 		"../env/genotyping.yml"
 	shell:
 		"gunzip -c {input} > {output}"
-
 
 
 ############################################################################
