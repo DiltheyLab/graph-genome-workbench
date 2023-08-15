@@ -1,6 +1,6 @@
 ---
 - hosts: denbi_vms
-  vars:
+  vars: 
     home_path: /home/ubuntu
     miniconda_version: py310_23.3.1-0 # Initial version: py39_4.12.0; Latest version: py310_23.3.1-0
     wfmash_version: v0.10.3 # Initial version: v0.8.2; Latest version: v0.10.3
@@ -21,6 +21,8 @@
     novograph_version: 1.0.0 # Initial version: 1.0.0; Latest version: 1.0.0
     htslib_version: 1.17 # Initial version: 1.15.1; Latest version: 1.17
     rtgtools_version: 3.12.1 # Initial version: 3.12.1 ; Latest version: 3.12.1
+    bayestyper_version: v1.5
+    paragraph_version: v2.4a
   tasks:
     - name: Download miniconda.
       ansible.builtin.get_url:
@@ -57,6 +59,7 @@
           - snakemake
           - bedtools
           - samtools
+          - kmc
     - name: Download pangenie.
       ansible.builtin.get_url:
         url: 'https://github.com/eblerjana/pangenie/archive/refs/tags/v{{ pangenie_version }}.tar.gz'
@@ -97,6 +100,61 @@
       ansible.builtin.copy:
         src: '{{ home_path }}/pangenie-{{ pangenie_version }}/build/src/PanGenie-graph'
         dest: /usr/local/bin/PanGenie-graph
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download bayesTyper
+      become: true
+      get_url:
+        url: 'https://github.com/bioinformatics-centre/BayesTyper/releases/download/{{ bayestyper_version }}/bayesTyper_{{ bayestyper_version }}_linux_x86_64.tar.gz'
+        dest: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64.tar.gz'
+        owner: ubuntu
+        mode: 0755
+    - name: Unzip bayesTyper.
+      ansible.builtin.unarchive:
+        src: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64.tar.gz'
+        dest: /tmp/
+        remote_src: true
+    - name: Copy bayesTyper to path
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64/bin/bayesTyper'
+        dest: /usr/local/bin/bayesTyper
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Copy bayesTyperTools to path
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64/bin/bayesTyperTools'
+        dest: /usr/local/bin/bayesTyperTools
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+    - name: Download Paragraph
+      become: true
+      get_url:
+        url: 'https://github.com/Illumina/paragraph/releases/download/{{ paragraph_version }}/paragraph-{{ paragraph_version }}-binary.zip'
+        dest: '/tmp/paragraph.zip'
+        owner: ubuntu
+        mode: 0755
+    - name: Create paragraph directory
+      ansible.builtin.file:
+        path: '/tmp/paragraph/'
+        state: directory
+    - name: Unzip paragraph.
+      ansible.builtin.unarchive:
+        src: /tmp/paragraph.zip
+        dest: '/tmp/paragraph/'
+        remote_src: true
+    - name: Copy paragraph to path
+      become: true
+      ansible.builtin.copy:
+        src: '/tmp/paragraph/bin/paragraph'
+        dest: /usr/local/bin/paragraph
         remote_src: true
         owner: ubuntu
         group: ubuntu
