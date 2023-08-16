@@ -1,0 +1,74 @@
+configfile:'config.json'
+
+include: "prepare-reads.smk"
+include: "genotyping.smk"
+
+### Parameters ###
+
+# input data for genotyping
+
+samples=config['data']['samples']
+
+# parameters
+chromosomes=config['parameters']['chromosomes']
+outname=config['parameters']['outname']
+outname_reads=config['parameters']['outname_reads']
+downsampling=['full']
+
+#variants=['snp', 'small-deletion', 'small-insertion', 'midsize-deletion', 'midsize-insertion', 'large-deletion', 'large-insertion']
+
+rule all:
+    input:
+        expand("{results}/{sample}/evaluation/{metric}/{mode}/{run_mode}_{regions}_{metric}.pdf",
+            results=outname,
+            sample=["NA24385"],
+            mode=["external"],
+            regions=["external", "repeats", "nonrep"],
+            run_mode=["genotyping-biallelic"],
+            metric=["precision-recall-typable", "concordance", "fscore"]
+        ),
+		# plots using GIAB-SV as ground truth
+        
+        #expand("{results}/{sample}/evaluation/{metric}/{mode}/{run_mode}_{regions}_{metric}.pdf",
+        #    results=outname,
+        #    sample=["NA24385"],
+        #    mode="graph",
+        #    regions= ["repeats", "nonrep"], # ["repeats-complex", "repeats-simple", "nonrep-complex", "nonrep-simple"],
+        #    run_mode=["genotyping-biallelic"],
+        #    metric=["precision-recall-typable", "concordance", "fscore"]
+        #),
+        #"results/NA24385/bayestyper/NA24385_full_bayestyper_genotyping.vcf",
+
+        #expand("{results}/{sample}/raw/{sample}-{fraction}.fastq", results=outname_reads, sample=samples, fraction=downsampling),
+        #expand("{results}/{sample}/aligned/{sample}-{fraction}.chr{chrom}.bam", results=outname_reads, sample=samples, fraction=downsampling, chrom=chromosomes),
+        #expand("{results}/{sample}/graphtyper/{sample}_{fraction}_graphtyper_genotyping.vcf", results=outname_reads, sample=samples, fraction=downsampling),
+        #expand("{results}/{sample}/pangenie/{sample}_{fraction}_pangenie_genotyping.vcf", results=outname_reads, sample=samples, fraction=downsampling),
+        #expand("{results}/{sample}/bayestyper/{sample}_{fraction}_bayestyper_genotyping.vcf", results=outname_reads, sample=samples, fraction=downsampling),
+        #{results}/{sample}/bayestyper/{sample}_{fraction}_bayestyper_genotyping.vcf,
+
+		# input data
+#		expand("{results}/{sample}/reference-panel/{sample}-chr{chrom}.vcf",
+#			results=outname,
+#			sample=samples,
+#			chrom=chromosomes),
+		# plots
+        # plots using graph as ground truth
+		# plots using GIAB-small as ground truth
+		#expand("{results}/{sample}/evaluation/{metric}/{mode}/{run_mode}_{regions}_{metric}.pdf",
+		#	results=outname,
+		#	sample=["NA12878"],
+		#	mode=["external"],
+		#	regions=["external"],
+		#	run_mode=["genotyping-biallelic", "discovery-biallelic"],
+		#	metric=["precision-recall-typable", "precision-recall-all", "concordance", "fscore"]
+		#),
+
+		# plots using syndip as ground truth
+		#expand("{results}/{sample}/evaluation/{metric}/{mode}/{run_mode}_{regions}_{metric}.pdf",
+		#	results=outname,
+		#	sample=["syndip"],
+		#	mode=["external"],
+		#	regions=["external", "repeats", "nonrep"],
+		#	run_mode=["genotyping-biallelic"],
+		#	metric=["precision-recall-typable", "precision-recall-all", "concordance", "fscore"]
+		###)

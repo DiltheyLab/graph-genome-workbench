@@ -1,0 +1,124 @@
+---------------------------------------------------------------
+metric=concordance mode=graph tool=pangenie region=nonrep-simple variant=indel quality=qual_0 
+---------------------------------------------------------------
+
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	0
+False	True	False	0
+False	True	True	11770992
+True	False	False	0
+True	False	True	0
+True	True	False	0
+True	True	True	3492682
+		0	1	2	3
+0	11730784	32904	7273	31
+1	28383	2005838	10350	8
+2	6864	12144	1427991	0
+3	37	335	732	0
+0 1104
+weighted_concordance	0.9881687668344584
+genotype_concordance_all	0.9935844192552337
+genotype_concordance_absent	0.9965867697633184
+genotype_concordance_het	0.9810556835639359
+genotype_concordance_hom	0.9868638471761211
+typed	0.9999974447291642
+total_baseline_variants	3491578
+total_unmatched	0
+precision	0.9817764749038403
+recall	0.9834604869202407
+
+---------------------------------------------------------------
+metric=concordance mode=graph tool=pangenie region=nonrep-simple variant=indel quality=qual_200 
+---------------------------------------------------------------
+
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	0
+False	True	False	0
+False	True	True	11770992
+True	False	False	0
+True	False	True	0
+True	True	False	0
+True	True	True	3492682
+		0	1	2	3
+0	11169560	10873	4773	585786
+1	10174	1884686	3639	146080
+2	3280	4281	1352461	86977
+3	11	285	665	143
+0 1104
+weighted_concordance	0.9952553237672707
+genotype_concordance_all	0.9974369496183361
+genotype_concordance_absent	0.9986011880335507
+genotype_concordance_het	0.9927242521592058
+genotype_concordance_hom	0.9944405311090556
+typed	0.9463495990517979
+total_baseline_variants	3491578
+total_unmatched	0
+precision	0.9924835888931505
+recall	0.9271300827305018
+
+---------------------------------------------------------------
+metric=concordance mode=graph tool=bayestyper region=nonrep-simple variant=indel quality=qual_0 
+---------------------------------------------------------------
+
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	15
+False	True	False	35
+False	True	True	11770977
+True	False	False	0
+True	False	True	18
+True	True	False	0
+True	True	True	3492664
+		0	1	2	3
+0	10935315	6323	3089	826265
+1	3644	1831800	1387	207748
+2	589	2137	1314664	129609
+3	25	241	635	238
+35 1139
+weighted_concordance	0.9981106143820263
+genotype_concordance_all	0.9987822495692587
+genotype_concordance_absent	0.9991400425063137
+genotype_concordance_het	0.9972610436126133
+genotype_concordance_hom	0.9979307570271522
+typed	0.9237597599879968
+total_baseline_variants	3491578
+total_unmatched	35
+precision	0.9956294956516456
+recall	0.9011581582883155
+
+---------------------------------------------------------------
+metric=concordance mode=graph tool=graphtyper region=nonrep-simple variant=indel quality=qual_0 
+---------------------------------------------------------------
+
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	11750841
+False	True	False	32
+False	True	True	20151
+True	False	False	0
+True	False	True	187739
+True	True	False	0
+True	True	True	3304943
+		0	1	2	3
+0	11752733	13140	5119	0
+1	119144	1918648	6787	0
+2	71177	4207	1371615	0
+3	393	228	515	0
+32 1136
+weighted_concordance	0.9615864649585985
+genotype_concordance_all	0.9856135631155173
+genotype_concordance_absent	0.9984488138297944
+genotype_concordance_het	0.9384073689497936
+genotype_concordance_hom	0.9479032120962074
+typed	1.0
+total_baseline_variants	3491578
+total_unmatched	32
+precision	0.9909657650201384
+recall	0.9423426886066988
+
