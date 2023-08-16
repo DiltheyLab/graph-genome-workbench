@@ -137,10 +137,9 @@ recall = true_positives / float(true_positives + false_negatives) if (true_posit
 
 
 unmatched = intersections[(False, True, False)]
-print("unmatched:", unmatched, "untyped:", {sum(matrix[3])})
+print(unmatched, sum(matrix[3]))
 assert sum(matrix[3]) >= unmatched
 
-print('TP:\t', true_positives, '\tFP:\t', false_positives, '\tand FN:\t', false_negatives)
 
 first_column = ['weighted_concordance', 'genotype_concordance_all', 'genotype_concordance_absent', 'genotype_concordance_het', 'genotype_concordance_hom', 'typed', 'total_baseline_variants', 'total_unmatched', 'precision', 'recall']
 second_column = [str(balanced_concordance), str(overall_concordance), str(conc_absent), str(conc_het), str(conc_hom), str(typed_all), str(all_present), str(unmatched), str(precision), str(recall)]

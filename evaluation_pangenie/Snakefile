@@ -1,0 +1,17 @@
+rule copy_my_pipeline_to_git_repo_folder:
+    input:
+        data = "/vol/whopper/testing_pangenie/my_pipeline/data",
+        genotyping = "/vol/whopper/testing_pangenie/my_pipeline/genotyping",
+        scripts = "/vol/whopper/testing_pangenie/my_pipeline/scripts"
+    output:
+        data = directory("/vol/whopper/graph-genome-workbench/evaluation_pangenie/data"),
+        genotyping = directory("/vol/whopper/graph-genome-workbench/evaluation_pangenie/genotyping"),
+        scripts = directory("/vol/whopper/graph-genome-workbench/evaluation_pangenie/scripts")
+    shell:
+        """
+        rsync -av --exclude='data/' {input.scripts}/ {output.scripts}
+        rsync -av --exclude='results/' --exclude='.snakemake/' {input.genotyping}/ {output.genotyping}
+        rsync -av --exclude='callset/' --exclude='.snakemake/' {input.data}/ {output.data}
+        """
+    
+        

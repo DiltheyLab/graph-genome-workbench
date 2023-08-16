@@ -41,7 +41,7 @@ for line in sys.stdin:
 	# allow bi-allelic records with unknown IDs (that are not in annotation VCF)
 	if (len(info_ids) == 1) and any([x not in chrom_to_variants[fields[0]] for x in info_ids[0].split(':')]):
 		# unknown ID, leave record as is
-		print(line[:-1]) # not working because they have several some have several ids.
+		print(line[:-1])
 		continue
 	# collect all variant IDs in this region
 	ids = set([])
@@ -50,7 +50,7 @@ for line in sys.stdin:
 			try:
 				ids.add((j,int(chrom_to_variants[fields[0]][j][0])))
 			except:
-				continue # so far, it's not working
+				continue
 	# sort the ids by the starting coordinate (to ensure the VCF is sorted)
 	ids = list(ids)
 	ids.sort(key=lambda x : x[1])

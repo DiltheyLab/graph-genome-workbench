@@ -23,7 +23,7 @@ for line in sys.stdin:
         continue
     fields = line.strip().split()
     info_fields = {s.split('=')[0] : s.split('=')[1] for s in fields[7].split(';') if '=' in s}
-    #assert 'SVMODEL' in info_fields 
+    #assert 'SVMODEL' in info_fields # we comment this, as graphTyper is discovering some small variants when called with SVs. Therefore, they are not included in the final VCF
     if 'SVMODEL' not in info_fields:
         continue #temporary solution to avoid indels detected with genotype_sv
     if info_fields['SVMODEL'] != 'AGGREGATED':
@@ -35,4 +35,3 @@ for line in sys.stdin:
     fields[4] = id_to_alleles[var_id][1]
     print('\t'.join(fields))
 	
-

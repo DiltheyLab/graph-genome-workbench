@@ -8,11 +8,19 @@ parser.add_argument('vartype', metavar='TYPE', help='variant type. Possible opti
 args = parser.parse_args()
 
 string_to_type = {
-    "indel": [VariantType.snp, VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex, VariantType.midsize_insertion, VariantType.midsize_deletion, VariantType.midsize_complex],
+	"snp": [VariantType.snp],
+	"small-insertion": [VariantType.small_insertion],
+	"small-deletion": [VariantType.small_deletion],
+	"midsize-insertion": [VariantType.midsize_insertion],
+	"midsize-deletion": [VariantType.midsize_deletion],
+	"large-insertion": [VariantType.large_insertion],
+	"large-deletion": [VariantType.large_deletion],
+	"indel": [VariantType.snp, VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex, VariantType.midsize_insertion, VariantType.midsize_deletion, VariantType.midsize_complex],
 	"sv": [VariantType.large_insertion, VariantType.large_deletion, VariantType.large_complex],
-    "small": [VariantType.snp, VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex],
+	"small": [VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex],
 	"midsize" : [VariantType.midsize_insertion, VariantType.midsize_deletion, VariantType.midsize_complex],
-	"large": [VariantType.large_insertion, VariantType.large_deletion, VariantType.large_complex]
+	"large": [VariantType.large_insertion, VariantType.large_deletion, VariantType.large_complex],
+	"all" : [VariantType.snp, VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex, VariantType.midsize_insertion, VariantType.midsize_deletion, VariantType.midsize_complex, VariantType.large_insertion, VariantType.large_deletion, VariantType.large_complex]
 }
 
 assert args.vartype in string_to_type

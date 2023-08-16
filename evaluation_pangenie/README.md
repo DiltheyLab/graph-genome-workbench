@@ -3,9 +3,9 @@ The pipeline is written in Snakemake and has three steps:
 
 - `download-data.smk`: This downloads all the necessary data. This includes: short-reads of our sample, a reference genome, a pangenome graph in VCF format (used to represent variants of already known haplotypes) and a benchmark dataset in VCF format (used to evaluate the resulting genotyped data).
 
-- `genotyping.smk`: This applies the PanGenie tool to the short-reads of our sample, the reference genome and the pangenome graph. As output, it produces a VCF file containing genotypes for the variants provided in the input pangenome graph.
+- `genotyping.smk`: This applies the PanGenie tool to the short-reads of our sample, the reference genome and the pangenome graph. As output, it produces a VCF file containing genotypes for the variants provided in the input pangenome graph. Additionally, we apply two other algorithms (i.e. BayesTyper and GraphTyper) for inference genotyping and comparing results between them.
 
-- `evaluation.smk`: With the help of VCFeval, this evaluates the resulting genotyped VCF file for our sample by comparing it to the corresponding assembly of our sample in VCF format. As output, it yields the measured performance between both VCF files mainly in terms of: precision, recall and F-measure.
+- `evaluation.smk`: With the help of VCFeval, this evaluates the resulting genotyped VCF file for our sample by comparing it to the corresponding assembly of our sample in VCF format. As output, it yields the measured performance between both VCF files mainly in terms of the following metrics: precision, recall and F-measure. This is carried out for each genotyping algorithm. Finally, the outcomes are plotted together depending on variant size for the three different metrics.
 
 Additionally, the `config.json` contains the paths to store our data and `run_pipeline.sh` allows us to run our workflow. To do so, execute the command: `sh run_pipeline.sh`
 
@@ -15,4 +15,11 @@ We used a highmem large VM (i.e. 28 VCPUs and 256 GB RAM) in the deNBI Cloud. Th
 
 ### Results
 
-The measured performance of our evaluation is shown in [summary.txt](summary.txt) 
+The measured performance of our evaluation is plotted 
+
+shown in [summary.txt](summary.txt) 
+
+### Acknowledgements
+
+The evaluation pipeline is an adaptation of the experiments carried out in *Ebler, J., Ebert, P., Clarke, W.E. et al. Pangenome-based genome inference allows efficient and accurate genotyping across a wide spectrum of variant classes. Nat Genet 54, 518–525 (2022). https://doi.org/10.1038/s41588-022-01043-w*
+
