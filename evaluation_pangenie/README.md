@@ -1,25 +1,29 @@
-This is a demonstration of how to use the PanGenie tool in order to evaluate the resulting variant-call output of PanGenie. The pipeline is applied to a sample (i.e. NA24385/HG002).
-The pipeline is written in Snakemake and has three steps:
+### Working pipeline for HGSVC data
 
-- `download-data.smk`: This downloads all the necessary data. This includes: short-reads of our sample, a reference genome, a pangenome graph in VCF format (used to represent variants of already known haplotypes) and a benchmark dataset in VCF format (used to evaluate the resulting genotyped data).
+However, still inconsistent as some data is taken from other folders. For instance: 
 
-- `genotyping.smk`: This applies the PanGenie tool to the short-reads of our sample, the reference genome and the pangenome graph. As output, it produces a VCF file containing genotypes for the variants provided in the input pangenome graph. Additionally, we apply two other algorithms (i.e. BayesTyper and GraphTyper) for inference genotyping and comparing results between them.
+From evaluation_pangenie I’m using:
+config-data:
+- downloaded/fasta  “reference”
+- downloaded/vcf/HGSVC  “untypable_input”
+- downloaded/vcf/HGSVC  “input_graph”
+- downloaded/vcf/GIAB  “truth_bed”
+- downloaded/vcf/GIAB  “GIAB”
+config-genotyping:
+- downloaded/vcf/HGSVC  “full_callset”
+- downloaded/vcf/HGSVC  “graph”
+- downloaded/vcf/HGSVC  “biallelic” 
+- downloaded/vcf/HGSVC  “truth”
+- downloaded/vcf/GIAB    “external”
+- downloaded/vcf/GIAB    “external_bed”
+- downloaded/bayestyper    “bayestyper_reference_canon”
+- downloaded/bayestyper    “bayestyper_reference_decoy”
+From genotyping-experiments I’m using:
+config-genotyping:
+- genotyping/reads   “reads”
+- data/callset/…/bed “bed”
+- data/downloaded/fasta   “reference”
 
-- `evaluation.smk`: With the help of VCFeval, this evaluates the resulting genotyped VCF file for our sample by comparing it to the corresponding assembly of our sample in VCF format. As output, it yields the measured performance between both VCF files mainly in terms of the following metrics: precision, recall and F-measure. This is carried out for each genotyping algorithm. Finally, the outcomes are plotted together depending on variant size for the three different metrics.
 
-Additionally, the `config.json` contains the paths to store our data and `run_pipeline.sh` allows us to run our workflow. To do so, execute the command: `sh run_pipeline.sh`
-
-### Computational Resources Usage
-
-We used a highmem large VM (i.e. 28 VCPUs and 256 GB RAM) in the deNBI Cloud. The runtime took approximately 20-30 minutes to download the data, 4 hours for the genotyping step and 2 minutes for evaluation. More specifically, we ran PanGenie with 24 threads for the counting kmers step and 24 threads for genotyping the chromosomes with the core algorithm. Total maximum memory usage increased up to 86 GB. Furthermore, we recommend executing this example pipeline in a volume so that there is enough disk space (downloaded data consumed 400GB+ when reads were unzipped for the genotyping step).
-
-### Results
-
-The measured performance of our evaluation is plotted 
-
-shown in [summary.txt](summary.txt) 
-
-### Acknowledgements
-
-The evaluation pipeline is an adaptation of the experiments carried out in *Ebler, J., Ebert, P., Clarke, W.E. et al. Pangenome-based genome inference allows efficient and accurate genotyping across a wide spectrum of variant classes. Nat Genet 54, 518–525 (2022). https://doi.org/10.1038/s41588-022-01043-w*
+Next steps are to run the pipeline from scratch and debug the files that are missing in the main folder. After that, the branch can be merged.
 
