@@ -1,0 +1,288 @@
+Folder: evaluation/NA24385/large/graphtyper/wGC
+#lines in genotyping/NA24385/graphtyper/genotyping_large.vcf.gz: 75663
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	157
+False	True	False	0
+False	True	True	45884
+True	False	False	15
+True	False	True	0
+True	True	False	0
+True	True	True	29622
+		0	1	2	3
+0	8452	8	174	49456
+1	722	36	323	8120
+2	172	3	623	7191
+3	19	0	6	373
+unmatched: 0 missing: {398}
+TP:	 659 	FP:	 514 	and FN:	 16531
+weighted_concordance	0.5976415995830746
+genotype_concordance_all	0.8666413012460763
+genotype_concordance_absent	0.9789205466759323
+genotype_concordance_het	0.03330249768732655
+genotype_concordance_hom	0.7807017543859649
+typed	0.13965196599362384
+total_baseline_variants	17190
+total_unmatched	0
+precision	0.5618073316283035
+recall	0.038336242001163465
+
+-----------------------------
+
+Folder: evaluation/NA24385/large/bayestyper/wGC
+#lines in genotyping/NA24385/bayestyper/genotyping_large.vcf.gz: 75704
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	156
+False	True	False	0
+False	True	True	45925
+True	False	False	14
+True	False	True	0
+True	True	False	0
+True	True	True	29623
+		0	1	2	3
+0	27663	696	320	29451
+1	478	2082	143	6498
+2	151	177	2243	5418
+3	18	4	11	365
+unmatched: 0 missing: {398}
+TP:	 4325 	FP:	 1351 	and FN:	 12865
+weighted_concordance	0.8690839449270604
+genotype_concordance_all	0.942125879892793
+genotype_concordance_absent	0.9645733812197078
+genotype_concordance_het	0.7702552719200888
+genotype_concordance_hom	0.8724231816413847
+typed	0.45078332448220926
+total_baseline_variants	17190
+total_unmatched	0
+precision	0.7619802677942212
+recall	0.2515997673065736
+
+-----------------------------
+
+Folder: evaluation/NA24385/large/pangenie/wGC
+#lines in genotyping/NA24385/pangenie/genotyping_large.vcf.gz: 75704
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	157
+False	True	False	0
+False	True	True	45910
+True	False	False	0
+True	False	True	0
+True	True	False	0
+True	True	True	29637
+		0	1	2	3
+0	53934	3086	1052	44
+1	2344	6362	491	4
+2	1363	1300	5324	2
+3	211	109	72	6
+unmatched: 0 missing: {398}
+TP:	 11686 	FP:	 6110 	and FN:	 5504
+weighted_concordance	0.7623580450667715
+genotype_concordance_all	0.8719570532582119
+genotype_concordance_absent	0.9287436285989806
+genotype_concordance_het	0.6917473089050777
+genotype_concordance_hom	0.6665831976962564
+typed	0.9993360422808275
+total_baseline_variants	17190
+total_unmatched	0
+precision	0.6566644189705552
+recall	0.6798138452588715
+
+-----------------------------
+
+Folder: evaluation/NA24385/midsize/graphtyper/wGC
+#lines in genotyping/NA24385/graphtyper/genotyping_midsize.vcf.gz: 3
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	0
+False	True	False	0
+False	True	True	0
+True	False	False	14273
+True	False	True	0
+True	True	False	0
+True	True	True	3
+		0	1	2	3
+0	3027	0	0	0
+1	6625	0	2	0
+2	4554	0	0	0
+3	68	0	0	0
+unmatched: 0 missing: {68}
+TP:	 0 	FP:	 2 	and FN:	 11181
+weighted_concordance	0.3333333333333333
+genotype_concordance_all	0.21304898648648649
+genotype_concordance_absent	1.0
+genotype_concordance_het	0.0
+genotype_concordance_hom	0.0
+typed	1.0
+total_baseline_variants	11181
+total_unmatched	0
+precision	0.0
+recall	0.0
+
+-----------------------------
+
+Folder: evaluation/NA24385/midsize/bayestyper/wGC
+#lines in genotyping/NA24385/bayestyper/genotyping_midsize.vcf.gz: 37206
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	46
+False	True	False	0
+False	True	True	22890
+True	False	False	6
+True	False	True	0
+True	True	False	0
+True	True	True	14270
+		0	1	2	3
+0	15518	110	64	10271
+1	175	3205	47	3200
+2	47	27	2268	2212
+3	2	1	1	64
+unmatched: 0 missing: {68}
+TP:	 5473 	FP:	 250 	and FN:	 5708
+weighted_concordance	0.9641783102963827
+genotype_concordance_all	0.9780998089557803
+genotype_concordance_absent	0.9889115472852409
+genotype_concordance_het	0.935220309308433
+genotype_concordance_hom	0.968403074295474
+typed	0.5777783760499677
+total_baseline_variants	11181
+total_unmatched	0
+precision	0.9563166171588328
+recall	0.4894911009748681
+
+-----------------------------
+
+Folder: evaluation/NA24385/midsize/pangenie/wGC
+#lines in genotyping/NA24385/pangenie/genotyping_midsize.vcf.gz: 37200
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	46
+False	True	False	0
+False	True	True	22878
+True	False	False	0
+True	False	True	0
+True	True	False	0
+True	True	True	14276
+		0	1	2	3
+0	24740	916	291	4
+1	809	5551	267	0
+2	318	368	3868	0
+3	43	9	16	0
+unmatched: 0 missing: {68}
+TP:	 9419 	FP:	 1867 	and FN:	 1762
+weighted_concordance	0.8801597390490997
+genotype_concordance_all	0.9200333979745744
+genotype_concordance_absent	0.953482098123097
+genotype_concordance_het	0.8376339218349178
+genotype_concordance_hom	0.8493631971892841
+typed	0.9998922762038134
+total_baseline_variants	11181
+total_unmatched	0
+precision	0.8345738082580187
+recall	0.8424112333422771
+
+-----------------------------
+
+Folder: evaluation/NA24385/small/graphtyper/wGC
+#lines in genotyping/NA24385/graphtyper/genotyping_small.vcf.gz: 5748
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	1
+False	True	False	0
+False	True	True	15
+True	False	False	3711688
+True	False	True	0
+True	True	False	0
+True	True	True	5732
+		0	1	2	3
+0	29281	4	9	0
+1	2162330	151	819	0
+2	1518283	0	4745	0
+3	1813	0	1	0
+unmatched: 0 missing: {1814}
+TP:	 4896 	FP:	 833 	and FN:	 3681432
+weighted_concordance	0.3342471759996269
+genotype_concordance_all	0.009198190773980775
+genotype_concordance_absent	0.9995562231173619
+genotype_concordance_het	6.980076734618407e-05
+genotype_concordance_hom	0.0031155041141725562
+typed	1.0
+total_baseline_variants	3686328
+total_unmatched	0
+precision	0.8545994065281899
+recall	0.0013281509404480555
+
+-----------------------------
+
+Folder: evaluation/NA24385/small/bayestyper/wGC
+#lines in genotyping/NA24385/bayestyper/genotyping_small.vcf.gz: 16039994
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	767
+False	True	False	0
+False	True	True	12321840
+True	False	False	33
+True	False	True	0
+True	True	False	0
+True	True	True	3717387
+		0	1	2	3
+0	11286299	10169	5142	1050275
+1	5823	1891196	2169	264112
+2	1168	2661	1353560	165639
+3	49	356	733	676
+unmatched: 0 missing: {1814}
+TP:	 3244756 	FP:	 21230 	and FN:	 441572
+weighted_concordance	0.9972054220867331
+genotype_concordance_all	0.9981363063958445
+genotype_concordance_absent	0.9986452372715038
+genotype_concordance_het	0.9957918857954031
+genotype_concordance_hom	0.9971791431932924
+typed	0.9077187714117527
+total_baseline_variants	3686328
+total_unmatched	0
+precision	0.9934996659508032
+recall	0.8802135892411093
+
+-----------------------------
+
+Folder: evaluation/NA24385/small/pangenie/wGC
+#lines in genotyping/NA24385/pangenie/genotyping_small.vcf.gz: 16039959
+{(False, False, False): 0, (False, False, True): 0, (False, True, False): 0, (False, True, True): 0, (True, False, False): 0, (True, False, True): 0, (True, True, False): 0, (True, True, True): 0}
+in_baseline	in_callset	in_ids
+False	False	False	0
+False	False	True	767
+False	True	False	0
+False	True	True	12321772
+True	False	False	0
+True	False	True	0
+True	True	False	0
+True	True	True	3717420
+		0	1	2	3
+0	12286724	51549	13476	68
+1	49245	2097199	16825	31
+2	12481	17996	1492542	9
+3	248	617	949	0
+unmatched: 0 missing: {1814}
+TP:	 3589741 	FP:	 101412 	and FN:	 96587
+weighted_concordance	0.9813943035075704
+genotype_concordance_all	0.9899256997598895
+genotype_concordance_absent	0.9947355633602982
+genotype_concordance_het	0.969458259698632
+genotype_concordance_hom	0.9799890874637808
+typed	0.9999932660541477
+total_baseline_variants	3686328
+total_unmatched	0
+precision	0.9725256579719128
+recall	0.9737985876460261
+
+-----------------------------
+

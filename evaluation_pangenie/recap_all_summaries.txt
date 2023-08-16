@@ -1,0 +1,81 @@
+Folder: evaluation/NA24385/large/graphtyper
+#lines in genotyping/NA24385/graphtyper/genotyping_large.vcf.gz: 75663
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+    1.000                995            995        185      16706     0.8432       0.0562     0.1054
+     None                995            995        185      16706     0.8432       0.0562     0.1054
+
+-----------------------------
+
+Folder: evaluation/NA24385/large/bayestyper
+#lines in genotyping/NA24385/bayestyper/genotyping_large.vcf.gz: 75704
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+   20.000               4707           4707       1024      12994     0.8213       0.2659     0.4018
+     None               4707           4707       1024      12994     0.8213       0.2659     0.4018
+
+-----------------------------
+
+Folder: evaluation/NA24385/large/pangenie
+#lines in genotyping/NA24385/pangenie/genotyping_large.vcf.gz: 75704
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+    1.000              13556          13556       4211       4145     0.7630       0.7658     0.7644
+     None              13556          13556       4212       4145     0.7629       0.7658     0.7644
+
+-----------------------------
+
+Folder: evaluation/NA24385/midsize/graphtyper
+#lines in genotyping/NA24385/graphtyper/genotyping_midsize.vcf.gz: 3
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+    9.000                  2              2          0      11382     1.0000       0.0002     0.0004
+     None                  2              2          0      11382     1.0000       0.0002     0.0004
+
+-----------------------------
+
+Folder: evaluation/NA24385/midsize/bayestyper
+#lines in genotyping/NA24385/bayestyper/genotyping_midsize.vcf.gz: 37206
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+   20.000               5565           5565        173       5819     0.9699       0.4888     0.6500
+     None               5565           5565        173       5819     0.9699       0.4888     0.6500
+
+-----------------------------
+
+Folder: evaluation/NA24385/midsize/pangenie
+#lines in genotyping/NA24385/pangenie/genotyping_midsize.vcf.gz: 37200
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+    1.000              10070          10070       1216       1314     0.8923       0.8846     0.8884
+     None              10070          10070       1216       1314     0.8923       0.8846     0.8884
+
+-----------------------------
+
+Folder: evaluation/NA24385/small/graphtyper
+#lines in genotyping/NA24385/graphtyper/genotyping_small.vcf.gz: 5748
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+    0.000               5717           5717         13    3786535     0.9977       0.0015     0.0030
+     None               5717           5717         13    3786535     0.9977       0.0015     0.0030
+
+-----------------------------
+
+Folder: evaluation/NA24385/small/bayestyper
+#lines in genotyping/NA24385/bayestyper/genotyping_small.vcf.gz: 16039994
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+   20.000            3251026        3251026      15481     541226     0.9953       0.8573     0.9211
+     None            3251026        3251026      15481     541226     0.9953       0.8573     0.9211
+
+-----------------------------
+
+Folder: evaluation/NA24385/small/pangenie
+#lines in genotyping/NA24385/pangenie/genotyping_small.vcf.gz: 16039959
+Threshold  True-pos-baseline  True-pos-call  False-pos  False-neg  Precision  Sensitivity  F-measure
+----------------------------------------------------------------------------------------------------
+    2.000            3625780        3625779      65297     166472     0.9823       0.9561     0.9690
+     None            3625811        3625810      65343     166441     0.9823       0.9561     0.9690
+
+-----------------------------
+

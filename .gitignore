@@ -1,0 +1,7 @@
+**/downloaded
+**/genotyping
+**/evaluation
+**/.snakemake/
+**/dev_test
+**/evaluation_old
+**/testing

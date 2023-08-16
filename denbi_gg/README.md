@@ -13,7 +13,7 @@ Host nickname_to_access_this_host
     Port port_to_connect_to_VM
 ```
 
-Please feel free to adapt the values `name_to_access_this_host`, `VM_IP_address`, `/path/to/private_key/for/deNBI_Cloud` and `port_to_connect_to_VM` to your specific situation.   
+Please feel free to adapt the values `nickname_to_access_this_host`, `VM_IP_address`, `/path/to/private_key/for/deNBI_Cloud` and `port_to_connect_to_VM` to your specific situation.   
 
 - In the inventory file, add the host nicknames of the VMs, that you provided in the previous step. There is an example of inventory file in this folder. In there, `preciseHopper` indicates the group naming of our VMs, `preciseHopper1` and `preciseHopper2` are the host nicknames we assigned to our VMs and `denbi_vms:children` show the host groups which we want to install the software in.
 
