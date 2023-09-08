@@ -21,5 +21,12 @@ Please feel free to adapt the values `nickname_to_access_this_host`, `VM_IP_addr
 
 `ansible-playbook main.yaml`
 
+#### Testing
 
-Additionally, we can test whether the software was properly installed by running: `sh test_software.sh`. This should show the different help commands for each tool.
+Additionally, we can test whether the software was properly installed. To do so, follow the next steps:
+- Access your VM: use the command `ssh "nickname_to_access_this_host"`. 
+- Copy the content of `test_software.sh` to your home directory [TO DO, downloaded directly with Ansible].
+- Run: `./test_software.sh`. This should show the different help commands for each tool.
+
+
+Now, your VM is ready to go. Check the [evaluation](https://github.com/DiltheyLab/graph-genome-workbench/tree/master/evaluation_pangenie) folder.
