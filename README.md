@@ -4,7 +4,7 @@ The folder [denbi_gg](denbi_gg/) contains the development space for Ansible play
 
  ![Workbench logo](/denbi_gg/logo_trans.png) [Information page](https://diltheylab.github.io/graph-genome-workbench/) 
 
-Additionally, in the folder [evaluation_pangenie](evaluation_pangenie/) there is a pipeline showing how to use the tool PanGenie in order to genotype for varaints of a sample using short-read data as well as to measure the performance of the resulting genotyped data and a benchmark assembly of such sample.
+Additionally, in the folder [evaluation_pipeline](evaluation_pipeline/) there is a pipeline to assess the performance of three state-of-the-art genotyping algorithms (PanGenie, BayesTyper and GraphTyper). The pipeline uses genomes graphs provided by the "Human Genome Structural Variant Consortium" (HGSVC) and it is applied to a standard benchmarking sample NA24385/HG002 of the "Genome In A Bottle" (GIAB).
 
 
 ### Requirements
