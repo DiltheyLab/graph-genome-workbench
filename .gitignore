@@ -4,3 +4,11 @@
 **/dev_test
 **/evaluation_old
 **/testing
+**/data/callset/
+**/data/callset-and-graph/
+**/data/downloaded/
+**/data/haplotype-resolved-assemblies/
+**/genotyping/reads/
+**/genotyping/results/
+**/genotyping/results_bad/
+**/data/prepared-datasets/
