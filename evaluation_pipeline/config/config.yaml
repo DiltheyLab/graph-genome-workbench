@@ -1,0 +1,59 @@
+
+### callsets to be used as input to PanGenie (multiple ones can be listed)
+
+callsets:
+    HGSVC:
+        # PanGenie-ready, multi-allelic VCF file
+        multi: "data/downloaded/vcf/HGSVC-GRCh38/Pangenome_graph_freeze3_64haplotypes.vcf.gz"
+        # PanGenie-ready, bi-allelic VCF file
+        bi: "data/downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf.gz"
+        # reference genome in FASTA format
+        reference: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+        # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion|large-complex
+        variants:
+            - snp 
+            - indels
+            - large-deletion
+            - large-insertion
+        # repeat annotations in BED format (see resources/ folder for GRCh38 and CHM13-based annotations)
+        repeat_regions: "resources/ucsc-simple-repeats.bed"
+        # samples to run a leave-one-out experiment on
+        leave_one_out_samples: 
+            - NA12878
+            
+
+
+
+# read data. File required that specifies a sample name, path to FASTA/FASTQ data and superpopulation:
+# FamilyID	SampleID	FatherID	MotherID	Population	Superpopulation	Sample_Illumina
+reads: "resources/reads.tsv"
+
+
+# PanGenie command. Different versions can be run by listing several commandlines
+pangenie: {}
+    
+
+# PanGenie command to be used for not yet released version of PanGenie (leave empty for now)
+pangenie-modules: 
+    pangenie.v3: "/usr/local/bin/PanGenie_v3.0.0"
+
+
+# Downsampling coverages for leave-one-out experiment. If reads shall not be downsampled, leave empty.
+downsampling: []
+
+
+# Other programs
+programs:
+    rtg: "/home/ubuntu/rtg-tools-3.12.1/rtg"
+    bwa: "/usr/bin/bwa"
+    bayestyper: "/usr/local/bin/bayesTyper"
+    bayestyper_tools: "/usr/local/bin/bayesTyperTools"
+    graphtyper: "/usr/local/bin/graphtyper"
+    kmc: "/usr/bin/kmc"
+    truvari: "/usr/local/bin/truvari"
+
+
+# Other parameters
+utils:
+    bayestyper_reference_canon: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_canon.fa"
+    bayestyper_reference_decoy: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_decoy.fa"

@@ -1,0 +1,15 @@
+name: genotyping
+channels:
+  - conda-forge
+  - bioconda
+  - main
+dependencies:
+  - bcftools
+  - bedtools
+  - matplotlib
+  - pyvcf
+  - samtools
+  - pyfaidx
+  - seaborn
+  - rtg-tools
+  - cyvcf2
