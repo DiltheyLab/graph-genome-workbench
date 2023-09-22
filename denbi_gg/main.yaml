@@ -111,12 +111,12 @@
     - name: Install truvari using pip
       pip:
         name: 'truvari=={{ truvari_version }}'
-        executable: pip3
+        executable: '{{ home_path }}/miniconda3/bin/pip3'
         state: present
     - name: Copy truvari to path.
       become: true
       ansible.builtin.copy:
-        src: '/home/ubuntu/.local/bin/truvari'
+        src: '{{ home_path }}/miniconda3/bin/truvari'
         dest: /usr/local/bin/truvari
         remote_src: true
         owner: ubuntu
