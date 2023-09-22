@@ -1,25 +1,24 @@
 
-### callsets to be used as input to PanGenie (multiple ones can be listed)
-
+### callsets to be used as input to genotyping tools (multiple ones can be listed)
 callsets:
     HGSVC:
-        # PanGenie-ready, multi-allelic VCF file
+        # multi-allelic VCF file
         multi: "data/downloaded/vcf/HGSVC-GRCh38/Pangenome_graph_freeze3_64haplotypes.vcf.gz"
-        # PanGenie-ready, bi-allelic VCF file
+        # bi-allelic VCF file
         bi: "data/downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf.gz"
         # reference genome in FASTA format
         reference: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa"
-        # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion|large-complex
+        # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion
         variants:
             - snp 
             - indels
             - large-deletion
             - large-insertion
-        # repeat annotations in BED format (see resources/ folder for GRCh38 and CHM13-based annotations)
+        # repeat annotations in BED format
         repeat_regions: "resources/ucsc-simple-repeats.bed"
         # samples to run a leave-one-out experiment on
-        leave_one_out_samples: 
-            - NA12878
+        leave_one_out_samples: # specify the samples to evaluate on
+            - NA24385
             
 
 
@@ -33,7 +32,7 @@ reads: "resources/reads.tsv"
 pangenie: {}
     
 
-# PanGenie command to be used for not yet released version of PanGenie (leave empty for now)
+# PanGenie command to be used for modularised versions of PanGenie
 pangenie-modules: 
     pangenie.v3: "/usr/local/bin/PanGenie_v3.0.0"
 
