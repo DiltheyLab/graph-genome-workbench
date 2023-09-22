@@ -23,8 +23,6 @@ We applied the pipeline to the following data: A 64-haplotype Pangenome graph de
 
 So far, only leave-one-out experiments are included (i.e. tool's genotyping performance is evaluated by removing one of the panel samples from the input VCF, and then genotyping it using a panel containing the remaining n-1 samples only).  External validation (i.e. using an external benchmarking truth dataset) is work in progress. 
 
-TO DO: describe the yaml config file and how to execute the pipeline. Add also a requirements section (nothing within denbi, but XYZ programs otherwise). Add acknowlegdements to Jana. 
-
 ## How to set up
 
 The configuration file should have the following structure:
@@ -179,7 +177,7 @@ BED file defining repeat regions. See `` resources/ `` folder for files that can
 
 **Requirements**
 
-Within de.NBI, we recommend to mount a volume of at least 500 Gb, so not to run into disk memory because of the large size of short-read data.
+Within de.NBI, we recommend to mount a volume of at least 500 Gb, so not to run into disk memory because of the large size of short-read data. Moreover, follow the next instructions:
 
 - Create and mount the volume following the [deNBI instructions](https://cloud.denbi.de/wiki/simple_vm/volumes/) and navigate until the desired directory within the volume, where the experiments will be carried out.  
 - Clone this repository with `https://github.com/DiltheyLab/graph-genome-workbench.git` and navigate to `evaluation_pipeline`.
