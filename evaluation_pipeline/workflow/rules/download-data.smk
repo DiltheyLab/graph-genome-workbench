@@ -11,7 +11,7 @@ for line in open(config['reads'], 'r'):
 
 rule download_data:
     input:
-        "data/downloaded/bed/hg38/ucsc-simple-repeats.merged.bed",
+        expand("data/downloaded/bed/hg38/{callset}/ucsc-simple-repeats.merged.bed", callset = [c for c in config['callsets'].keys()]),
 
         # references + indexing
         'data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa',
@@ -39,7 +39,7 @@ rule download_data:
 # bed is downloaded already, sort and merge it
 rule ucsc_repeats:
 	input:
-		lambda wildcards: config[wildcards.callset]['repeat_regions']
+		lambda wildcards: config['callsets'][wildcards.callset]['repeat_regions']
 	output:
 		"data/downloaded/bed/hg38/{callset}/ucsc-simple-repeats.merged.bed"
 	shell:
