@@ -1,6 +1,12 @@
 [preciseHopper]
-preciseHopper1
-preciseHopper2
+movingTuring
 
 [denbi_vms:children]
 preciseHopper
+
+[masternode]
+masterCluster
+
+[workers]
+node1Cluster
+node2Cluster
