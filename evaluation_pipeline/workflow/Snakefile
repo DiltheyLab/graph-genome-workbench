@@ -1,0 +1,20 @@
+configfile: 'config/config.yaml'
+include: 'rules/download-data.smk'
+include: 'rules/downsample-reads.smk'
+include: 'rules/leave-one-out-experiments.smk'
+
+coverages = ['full'] + config['downsampling']
+
+versions_to_run = [v for v in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] + ['bayestyper', 'graphtyper']
+
+chromosomes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X"]
+
+rule all:
+	input:
+		expand("results/leave-one-out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
+		expand("results/leave-one-out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic'])
+
+rule leave_one_out:
+	input:
+		expand("results/leave-one-out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
+		expand("results/leave-one-out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic']),
