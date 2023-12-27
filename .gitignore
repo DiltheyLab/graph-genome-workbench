@@ -14,3 +14,6 @@
 **/data/prepared-datasets/
 **/ubuntu-docker_testing
 **/playbook_denbi
+**/playbook_denbi_working
+denbi_gg/roles/github-ssh/
+denbi_gg/roles/mamba-snakemake/

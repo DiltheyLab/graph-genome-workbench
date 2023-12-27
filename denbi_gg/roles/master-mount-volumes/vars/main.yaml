@@ -1,0 +1,4 @@
+CIDR: 192.168.1.0/24
+nfs_mounts:
+- src: /vol/whopper
+  dst: /vol/whopper

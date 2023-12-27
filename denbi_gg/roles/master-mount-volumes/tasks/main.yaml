@@ -1,20 +1,3 @@
-# - name: Create mount points
-#   become: true
-#   file:
-#     path: "/vol/whopper"
-#     state: directory
-#     owner: root
-#     group: root
-#     mode: 0777
-
-# - name: Mount shares
-#   become: true
-#   mount:
-#     path: "/vol/whopper"
-#     src: "172.17.0.1/16:/vol/whopper"
-#     fstype: nfs4
-#     state: mounted
-
 - name: Install NFS server package
   apt:
     name: "nfs-kernel-server"

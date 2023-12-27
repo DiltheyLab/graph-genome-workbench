@@ -14,6 +14,16 @@
     line: 'export PATH=/home/ubuntu/miniconda3/bin:$PATH'
     create: yes
     state: present
+- name: Download micromamba.
+  ansible.builtin.get_url:
+    url: 'https://micro.mamba.pm/install.sh'
+    dest: /tmp/micromamba.sh
+    mode: 0744
+- name: Install micromamba.
+  ansible.builtin.command: >
+    /tmp/micromamba.sh
+  args:
+    creates: "{{ home_path }}/.local/bin/micromamba"
 - name: Install apt packages.
   become: true
   ansible.builtin.apt:
