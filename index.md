@@ -2,7 +2,7 @@
 layout: default
 ---
 
-![GGW_logo](/denbi_gg/logo_trans.png){: width="450"}
+![GGW_logo](/logo_trans.png){: width="450"}
 
 ## Software
 
