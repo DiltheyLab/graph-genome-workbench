@@ -3,6 +3,7 @@ plugins_dir:
   - jekyll-remote-theme 
 
 theme: jekyll-theme-modernist
+
 exclude:
   - 'denbi_gg/'
   - 'evaluation_pipeline/'
