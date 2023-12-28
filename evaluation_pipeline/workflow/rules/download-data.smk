@@ -194,13 +194,23 @@ rule bwa_index_fasta:
 #######################   Download utils     #######################
 ####################################################################
 
+### Following data is downloaded from Google Drive, since the original link doesn't work anymore. 
+### --> See issue: https://github.com/bioinformatics-centre/BayesTyper/issues/48
+
 rule download_BayesTyper_GRCh38_bundle:
     output:
         compressed_bundle="data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle.tar.gz", 
         uncompressed_bundle=directory("data/downloaded/bayestyper_utils")
+    params:
+        file_id = "1ioTjLFkfmvOMsXubJS5_rwpfajPv5G1Q"
     shell:
         """
-        wget -O {output.compressed_bundle} http://people.binf.ku.dk/~lassemaretty/bayesTyper/bayestyper_GRCh38_bundle.tar.gz 
+        wget --load-cookies /tmp/cookies.txt \
+        "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate \
+        'https://drive.google.com/uc?export=download&id={params.file_id}' -O- | \
+        sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\\1\\n/p')&id={params.file_id}" \
+        -O {output.compressed_bundle} && rm -rf /tmp/cookies.txt
+        
         tar -xvf {output.compressed_bundle} -C {output.uncompressed_bundle} 
         """
 
