@@ -18,7 +18,7 @@ callsets:
         repeat_regions: "resources/ucsc-simple-repeats.bed"
         # samples to run a leave-one-out experiment on
         leave_one_out_samples: # specify the samples to evaluate on
-            - NA24385
+            - NA12878
             
 
 
