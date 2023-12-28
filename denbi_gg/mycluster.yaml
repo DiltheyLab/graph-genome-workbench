@@ -1,12 +1,12 @@
 ---
 - hosts: masternode
   roles:
-    #- mount-volumes
+    - master-mount-volumes
     #- conda-snakemake
 
 - hosts: workers
   roles:
-    - mount-volumes
+    - workers-mount-volumes
     #- genotyping
 
 ...

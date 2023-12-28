@@ -33,7 +33,7 @@ Additionally, we can test whether the software was properly installed, once the 
 - Access your VM: use the command `ssh "nickname_to_access_this_host"`.
 - Clone the repository into your directory of preference with the command: `git clone https://github.com/DiltheyLab/graph-genome-workbench.git`
 - Navigate to [denbi_gg](https://github.com/DiltheyLab/graph-genome-workbench/tree/master/denbi_gg) folder.
-- Run: `./test_software.sh`. This should show the different help commands for each tool. Additionally, in the first execution you might want to accept/reject the logging message for RTG Tools so that the message is not displayed during evaluation pipeline execution.
+- Run: `./test_software.sh`. You might make the file executable first with `chmod +x test_software.sh`  This should show the different help commands for each tool. Additionally, in the first execution you might want to accept/reject the logging message for RTG Tools so that the message is not displayed during evaluation pipeline execution.
 
 
 Now, your VM is ready to go. Check the [evaluation](https://github.com/DiltheyLab/graph-genome-workbench/tree/master/evaluation_pangenie) folder to run the genotype inference pipeline.
