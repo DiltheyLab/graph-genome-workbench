@@ -3,11 +3,16 @@
 callsets:
     HGSVC:
         # multi-allelic VCF file
-        multi: "data/downloaded/vcf/HGSVC-GRCh38/Pangenome_graph_freeze3_64haplotypes.vcf.gz"
+        #multi: "data/downloaded/vcf/HGSVC-GRCh38/Pangenome_graph_freeze3_64haplotypes.vcf.gz"
+        multi: "reduced-data/Pangenome_graph_freeze3_64haplotypes.vcf.gz"
         # bi-allelic VCF file
-        bi: "data/downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf.gz"
+        #bi: "data/downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf.gz"
+        bi: "reduced-data/Callset_freeze3_64haplotypes.vcf.gz"
         # reference genome in FASTA format
-        reference: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+        #reference: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+        reference: "reduced-data/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+        #reference_fai: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai"
+        reference_fai: "reduced-data/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai"
         # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion
         variants:
             - snp 
@@ -19,13 +24,26 @@ callsets:
         # samples to run a leave-one-out experiment on
         leave_one_out_samples: # specify the samples to evaluate on
             - NA12878
-            
+        truthsets: # specify the samples to (externally) evaluate on
+            NA12878: 
+                path: "reduced-data/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" # benchmark dataset used a truth for external evaluation 
+                callable_regions: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed" # path to BED with callable regions
+                vartype: # options: snp-indel, sv
+                    - snp-indel
+                    - sv
+                regions: # options: all, multi, bi
+                    - all
+                    #- multi
+                    #- bi
+                filters: # options: all, typable
+                    - all
+                    - typable
 
 
 
 # read data. File required that specifies a sample name, path to FASTA/FASTQ data and superpopulation:
 # FamilyID	SampleID	FatherID	MotherID	Population	Superpopulation	Sample_Illumina
-reads: "resources/reads.tsv"
+reads: "resources/reads_reduced.tsv"
 
 
 # PanGenie command. Different versions can be run by listing several commandlines

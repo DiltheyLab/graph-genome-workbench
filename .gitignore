@@ -15,3 +15,9 @@
 **/data/prepared-datasets/
 **/ubuntu-docker_testing
 **/playbook_denbi
+**/external-eval
+**/external-eval_old
+**/external-eval_dev
+**/external-eval_*
+**/reduced-data
+**/__pycache__

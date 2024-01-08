@@ -1,13 +1,19 @@
-configfile: 'config/config.yaml'
+include: 'rules/external_val.smk'
 include: 'rules/download-data.smk'
 include: 'rules/downsample-reads.smk'
-include: 'rules/leave-one-out-experiments.smk'
+#include: 'rules/leave-one-out-experiments.smk'
+#include: 'rules/utils.smk'
 
 coverages = ['full'] + config['downsampling']
-
-versions_to_run = [v for v in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] + ['bayestyper', 'graphtyper']
-
+versions_to_run = [v for v in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] #+ ['bayestyper', 'graphtyper']
 chromosomes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X"]
+truthsets_sv = [t for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys() if 'sv' in config["callsets"][c]["truthsets"][t]["vartype"]]
+truthsets_small = [t for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys() if "snp-indel" in config["callsets"][c]["truthsets"][t]["vartype"]]
+regions = [r for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys() for r in config["callsets"][c]["truthsets"][t]["regions"]]
+filters = [f for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys() for f in config["callsets"][c]["truthsets"][t]["filters"]]
+callsets = [c for c in config["callsets"].keys()]
+truthsets = [t for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys()]
+
 
 rule all:
 	input:
@@ -18,3 +24,30 @@ rule leave_one_out:
 	input:
 		expand("results/leave-one-out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
 		expand("results/leave-one-out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic']),
+
+
+
+# generate all combinations of desired output files to be produced
+def external_eval_files(wildcards):
+    filenames = []
+    for c in callsets:
+        for cov in coverages:
+            for v in versions_to_run:
+                for f in filters:
+                    for r in regions:
+                        for t in truthsets:
+                            filenames.append("external-eval/" + c + "/" + t + "/vcfeval_" + v + "_" + cov + "_" + f + "_region-" + r + "/summary.txt")
+                            filenames.append("external-eval/" + c + "/" + t + "/truvari_" + v + "_" + cov + "_" + f + "_region-" + r + "/summary.json")
+    return filenames
+
+
+
+
+rule external_eval:
+    input:
+        external_eval_files,
+        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/genotyping-biallelic.vcf", callset=['HGSVC'], sample=['NA12878'], version=['pangenie.v3'], coverage=['full']),
+        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA12878'], version=['pangenie.v3'], coverage=['full'], filter=['typable'], method=['vcfeval', 'truvari']),
+        #expand("external-eval/{callset}/{sample}/groundtruth-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA12878'], filter=['typable'], method=['vcfeval', 'truvari']),
+        ###
+        

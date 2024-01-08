@@ -18,7 +18,7 @@ string_to_type = {
 	"large-insertion": [VariantType.large_insertion],
 	"large-deletion": [VariantType.large_deletion],
 	"large-complex": [VariantType.large_complex],
-	"indel": [VariantType.snp, VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex, VariantType.midsize_insertion, VariantType.midsize_deletion, VariantType.midsize_complex],
+	"snp-indel": [VariantType.snp, VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex, VariantType.midsize_insertion, VariantType.midsize_deletion, VariantType.midsize_complex],
 	"indels": [VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex, VariantType.midsize_insertion, VariantType.midsize_deletion, VariantType.midsize_complex],
 	"sv": [VariantType.large_insertion, VariantType.large_deletion, VariantType.large_complex],
 	"small": [VariantType.small_insertion, VariantType.small_deletion, VariantType.small_complex],

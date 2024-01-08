@@ -1,13 +1,14 @@
 # stores paths to reads
-reads_leave_one_out = {}
+read_paths = {}
 
 for line in open(config['reads'], 'r'):
 	if line.startswith('#'):
 		continue
 	fields = line.strip().split()
-	sample_id = fields[2]
+	sample_id = fields[1]
 	read_path = fields[7]
-	reads_leave_one_out[sample_id] = read_path
+	read_paths[sample_id] = read_path
+
 
 rule download_data:
     input:
@@ -25,10 +26,16 @@ rule download_data:
         'data/downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf.gz',
          
         # reads
-        expand("{sample_paths}", sample_paths=list(reads_leave_one_out.values())),
+        expand("{sample_paths}", sample_paths=list(read_paths.values())),
 
         ## Download GRCh38 bundle for BayesTyper
-        "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle.tar.gz"
+        "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle.tar.gz",
+
+        ## Download HG002/NA24385 benchmark external validation dataset
+        "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+        "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
+        "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed"
+
 
         
 
@@ -214,3 +221,18 @@ rule download_BayesTyper_GRCh38_bundle:
         tar -xvf {output.compressed_bundle} -C {output.uncompressed_bundle} 
         """
 
+
+####################################################################
+#####   Download benchmark external validation dataset     #########
+####################################################################
+
+# download GIAB benchmark VCF file for HG002_NA24385
+rule download_GIAB_bechmark_HG002:
+	output:
+		vcf="data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+		tbi="data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
+		bed="data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed"
+	run:
+		shell("wget -O {output.vcf} https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/latest/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz")
+		shell("wget -O {output.tbi} https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/latest/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi")
+		shell("wget -O {output.bed} https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/latest/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed")
