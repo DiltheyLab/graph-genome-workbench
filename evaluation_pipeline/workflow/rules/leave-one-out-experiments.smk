@@ -103,7 +103,7 @@ rule prepare_truth:
 
 rule compress_vcf:
 	input:
-		temp("results/leave-one-out/{filename}.vcf")
+		"results/leave-one-out/{filename}.vcf"
 	output:
 		vcf = "results/leave-one-out/{filename}.vcf.gz",
 		tbi = "results/leave-one-out/{filename}.vcf.gz.tbi"
