@@ -1,4 +1,4 @@
-include: 'rules/external_val.smk'
+include: 'rules/external-val.smk'
 include: 'rules/download-data.smk'
 include: 'rules/downsample-reads.smk'
 #include: 'rules/leave-one-out-experiments.smk'
@@ -46,8 +46,8 @@ def external_eval_files(wildcards):
 rule external_eval:
     input:
         external_eval_files,
-        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/genotyping-biallelic.vcf", callset=['HGSVC'], sample=['NA12878'], version=['pangenie.v3'], coverage=['full']),
-        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA12878'], version=['pangenie.v3'], coverage=['full'], filter=['typable'], method=['vcfeval', 'truvari']),
-        #expand("external-eval/{callset}/{sample}/groundtruth-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA12878'], filter=['typable'], method=['vcfeval', 'truvari']),
+        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA24385'], version=['pangenie.v3'], coverage=['full'], filter=['typable'], method=['vcfeval', 'truvari']),
+        #expand("external-eval/{callset}/{sample}/groundtruth-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA24385'], filter=['typable'], method=['vcfeval', 'truvari']),
+        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/genotyping-biallelic.vcf", callset=['HGSVC'], sample=['NA24385'], version=['pangenie.v3'], coverage=['full']),
         ###
         

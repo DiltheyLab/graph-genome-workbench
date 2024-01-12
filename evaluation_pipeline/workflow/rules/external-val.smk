@@ -30,7 +30,7 @@ truthsets_small = [t for c in config["callsets"].keys() for t in config["callset
 
 truthsets = [t for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys()]
 callsets = [s for s in config['callsets'].keys()]
-## callsets & regions to be determined during execution
+## genotyped callsets & regions to be determined during execution
 
 def query_left_one_out_samples(c, t):
 	for line in gzip.open(config["callsets"][c]['bi'], 'rt'):
@@ -50,10 +50,9 @@ for c in callsets:
 	for t in truthsets:
 		assembly_samples[c][t] = query_left_one_out_samples(c, t)
 
-
-##########################################################################
-##  Preprocessing (Callsets: Biallelic and Multiallelic) and Truthset  ###
-##########################################################################
+########################################################
+###########    Genotyping Pipeline (PanGenie)    #######
+########################################################
 
 ### Preprocess Multiallelic (Pangenome)
 rule prepare_panel:
@@ -67,11 +66,6 @@ rule prepare_panel:
 		"""
 		bcftools view --samples ^{wildcards.sample} {input.vcf} | bcftools view --min-ac 1 > {output.vcf}
 		"""
-
-
-########################################################
-##################    run PanGenie    ##################
-########################################################
 
 # run pangenie
 ## If in input reads = lambda wildcards: "results/downsampling/{callset}/{coverage}/{sample}_{coverage}.fa.gz",
@@ -154,11 +148,6 @@ rule convert_genotypes_to_biallelic:
 	shell:
 		"(cat {input.genotyped_vcf} | python workflow/scripts/convert-to-biallelic.py {input.biallelic} | awk '$1 ~ /^#/ {{print $0;next}} {{print $0 | \"sort -k1,1 -k2,2n \"}}' > {output}) &> {log}"
 
-
-####################################################################################################
-######   Split Callset and Truthset benchmark depending on Variant Type (snp-indels vs. SVs)  ######  
-####################################################################################################
-
 # split between snp-indels and SVs
 rule split_genotyped_by_variantsize_callset:
     input:
@@ -173,12 +162,17 @@ rule split_genotyped_by_variantsize_callset:
         tabix -p vcf {output}
         """
 
-# split between snp-indels and SVs
+####################################################
+######   Preprocessing Pipeline for Truthset  ######  
+####################################################
+
+
+# Convert truthset to biallelic and split between snp-indels and SVs
 rule convert_to_biallelic_and_split_by_variantsize_truthset:
     input:
         groundtruth = lambda wildcards: config['callsets'][wildcards.callset]['truthsets'][wildcards.sample]["path"]
     output:
-        "external-eval/{callset}/vcf/truthset-{sample}_{vartype}.vcf.gz"
+        "external-eval/{callset}/{sample}/truthset/truthset_{vartype}.vcf.gz"
     wildcard_constraints:
         vartype="snp-indel|sv"
     shell:
@@ -187,20 +181,17 @@ rule convert_to_biallelic_and_split_by_variantsize_truthset:
         tabix -p vcf {output}
         """
 
-
-####################################################################################################
-#  find out which variants in the truth set are not contained in the pangenome graph (=untypables)
-####################################################################################################
-
-# assign each variant a unique ID (if a variant matches with panel, use the same ID as panel).
+######## Compute Untypables ########
+####  Find out which variants in the truth set are not contained in the pangenome graph (=untypables, because our methods are re-genotypers, i.e. no new variants detected)
+#### Assign each variant a unique ID (if a variant matches with panel, use the same ID as panel).
 rule annotate_variants_from_callset_in_truthset:
 	input:
-		truthset = "external-eval/{callset}/vcf/truthset-{sample}_{vartype}.vcf.gz",
+		truthset = "external-eval/{callset}/{sample}/truthset/truthset_{vartype}.vcf.gz",
 		panel = lambda wildcards: config['callsets'][wildcards.callset]['bi'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']
 	output:
-		vcf="external-eval/{callset}/vcf/truthset-{sample}_{vartype}-annotated.vcf.gz",
-		tbi="external-eval/{callset}/vcf/truthset-{sample}_{vartype}-annotated.vcf.gz.tbi"
+		vcf="external-eval/{callset}/{sample}/truthset/truthset_{vartype}-annotated.vcf.gz",
+		tbi="external-eval/{callset}/{sample}/truthset/truthset_{vartype}-annotated.vcf.gz.tbi"
 	wildcard_constraints:
 		callsets = "|".join(callsets),
 		sample = "|".join(truthsets), 
@@ -231,23 +222,16 @@ rule rtg_format_callsets:
 	shell:
 		"{rtg} format -o {output} {input}"
 
-
-# for each panel sample determine its false negatives comparing to the truth set.
-# these are variants only in the truth, but not detected in the sample itself.
-# later, intersect all false negatives across the panel samples, to find out
-# which variants are not present in the pangenome graph, but are in the truth.
-# these variants are not accessible by re-genotyping methods, that are unable
-# to detect variants themselves ("untypables").
 rule determine_false_negatives_vcfeval:
 	input:
-		truthset="external-eval/{callset}/vcf/truthset-{sample}_snp-indel-annotated.vcf.gz",
+		truthset="external-eval/{callset}/{sample}/truthset/truthset_snp-indel-annotated.vcf.gz",
 		panel = lambda wildcards: config['callsets'][wildcards.callset]['bi'],
 		reference = lambda wildcards: config['callsets'][wildcards.callset]['reference'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai'],
 		sdf="external-eval/{callset}/SDF"
 	output:
-		sample_vcf="external-eval/{callset}/vcf/{sample}/samples/{panelsample}-vcfeval.vcf.gz",
-		fn="external-eval/{callset}/vcf/{sample}/samples/{panelsample}/vcfeval/fn.vcf.gz"
+		sample_vcf="external-eval/{callset}/{sample}/truthset/samples/{panelsample}-vcfeval.vcf.gz",
+		fn="external-eval/{callset}/{sample}/truthset/samples/{panelsample}/vcfeval/fn.vcf.gz"
 	wildcard_constraints:
 		truthset="|".join(truthsets_small), 
         callsets = "|".join(callsets),
@@ -255,15 +239,15 @@ rule determine_false_negatives_vcfeval:
 	conda:
 		"../envs/genotyping.yml"
 	params:
-		tmp="external-eval/{callset}/vcf/{sample}/samples/{panelsample}/vcfeval_temp",
-		outname="external-eval/{callset}/vcf/{sample}/samples/{panelsample}/vcfeval"
+		tmp="external-eval/{callset}/{sample}/truthset/samples/{panelsample}/vcfeval_temp",
+		outname="external-eval/{callset}/{sample}/truthset/samples/{panelsample}/vcfeval"
 	threads: 28
 	resources:
 		mem_total_mb=50000,
 		runtime_hrs=0,
 		runtime_min=59
 	log:
-		"external-eval/{callset}/vcf/{sample}/samples/{panelsample}/vcfeval.log"
+		"external-eval/{callset}/{sample}/truthset/samples/{panelsample}/vcfeval.log"
 	shell:
 		"""
 		bcftools view --samples {wildcards.panelsample} {input.panel} | bcftools view --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.sample_vcf}
@@ -277,14 +261,14 @@ rule determine_false_negatives_vcfeval:
 # same as previous rule, but for SVs using truvari instead of vcfeval
 rule determine_false_negatives_truvari:
 	input:
-		truthset = "external-eval/{callset}/vcf/truthset-{sample}_sv-annotated.vcf.gz",
+		truthset = "external-eval/{callset}/{sample}/truthset/truthset_sv-annotated.vcf.gz",
 		panel = lambda wildcards: config['callsets'][wildcards.callset]['bi'],
 		reference = lambda wildcards: config['callsets'][wildcards.callset]['reference'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai'],
 		sdf = "external-eval/{callset}/SDF"
 	output:
-		sample_vcf = "external-eval/{callset}/vcf/{sample}/samples/{panelsample}-truvari.vcf.gz",
-		fn = "external-eval/{callset}/vcf/{sample}/samples/{panelsample}/truvari/fn.vcf.gz"
+		sample_vcf = "external-eval/{callset}/{sample}/truthset/samples/{panelsample}-truvari.vcf.gz",
+		fn = "external-eval/{callset}/{sample}/truthset/samples/{panelsample}/truvari/fn.vcf.gz"
 	wildcard_constraints:
 		truthset="|".join(truthsets_sv), 
         callsets = "|".join(callsets),
@@ -292,15 +276,15 @@ rule determine_false_negatives_truvari:
 	conda:
 		"../envs/genotyping.yml"
 	params:
-		tmp="external-eval/{callset}/vcf/{sample}/samples/{panelsample}/truvari_temp",
-		outname="external-eval/{callset}/vcf/{sample}/samples/{panelsample}/truvari"
+		tmp="external-eval/{callset}/{sample}/truthset/samples/{panelsample}/truvari_temp",
+		outname="external-eval/{callset}/{sample}/truthset/samples/{panelsample}/truvari"
 	threads: 1
 	resources:
 		mem_total_mb=30000,
 		runtime_hrs=0,
 		runtime_min=59
 	log:
-		"external-eval/{callset}/vcf/{sample}/samples/{panelsample}/truvari.log"
+		"external-eval/{callset}/{sample}/truthset/samples/{panelsample}/truvari.log"
 	shell:
 		"""
 		bcftools view --samples {wildcards.panelsample} {input.panel} | bcftools view --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.sample_vcf}
@@ -312,19 +296,19 @@ rule determine_false_negatives_truvari:
 
 def get_truthset_given_method(wildcards):
     if wildcards.method == 'vcfeval':
-        return f"external-eval/{wildcards.callset}/vcf/truthset-{wildcards.sample}_snp-indel-annotated.vcf.gz"
+        return f"external-eval/{wildcards.callset}/{wildcards.sample}/truthset/truthset_snp-indel-annotated.vcf.gz"
     if wildcards.method == 'truvari':
-        return f"external-eval/{wildcards.callset}/vcf/truthset-{wildcards.sample}_sv-annotated.vcf.gz"
+        return f"external-eval/{wildcards.callset}/{wildcards.sample}/truthset/truthset_sv-annotated.vcf.gz"
 
 # intersect the sets of FNs computed for each panel sample. The intersection then defines the set of unique/untypable variants
 # Take into account that vartype=snp-indel relates to method=vcfeval and vartype=sv relates to method=truvari
 rule determine_unique:
 	input:
 		truthset = get_truthset_given_method,
-		samples = lambda wildcards: expand("external-eval/{{callset}}/vcf/{{sample}}/samples/{sample}/{{method}}/fn.vcf.gz", sample=[s for s in assembly_samples[wildcards.callset][wildcards.sample] if not s == "CHM13"])
+		samples = lambda wildcards: expand("external-eval/{{callset}}/{{sample}}/truthset/samples/{sample}/{{method}}/fn.vcf.gz", sample=[s for s in assembly_samples[wildcards.callset][wildcards.sample] if not s == "CHM13"])
 	output:
-		unique_tsv="external-eval/{callset}/vcf/{sample}-unique_{method}.tsv",
-		unique_vcf="external-eval/{callset}/vcf/{sample}-unique_{method}.vcf"
+		unique_tsv="external-eval/{callset}/{sample}/truthset/untypables_{method}.tsv",
+		unique_vcf="external-eval/{callset}/{sample}/truthset/untypables_{method}.vcf"
 	conda:
 		"../envs/genotyping.yml"
 	params:
@@ -339,99 +323,16 @@ rule determine_unique:
 		grep -v '#' {output.unique_vcf} | cut -f 3  > {output.unique_tsv}
 		"""
 
-
-rule count_unique_type:
-	input:
-		total="external-eval/{callset}/vcf/truthset-{sample}.vcf.gz",
-		unique="external-eval/{callset}/vcf/{sample}-unique_{method}.vcf"
-	output:
-		total="external-eval/{callset}/vcf/{sample}-total_{method}-{vartype}.vcf",
-		unique="external-eval/{callset}/vcf/{sample}-unique_{method}-{vartype}.vcf"
-	conda:
-		"../envs/genotyping.yml"
-	wildcard_constraints:
-		vartype="snp-indel|sv"
-	shell:
-		"""
-		bcftools view {input.total} | python workflow/scripts/extract-varianttype.py {wildcards.vartype} > {output.total}
-		bcftools view {input.unique} | python workflow/scripts/extract-varianttype.py {wildcards.vartype} > {output.unique}
-		"""
-
-####################################################################################################
-#  compare genotyping results to the truthset, excluding untypable variants which cannot be 
-#  genotyped correctly by a re-genotyper
-####################################################################################################
-
-# remove untypables from groundtruth and extract only variants of a specific type.
-rule remove_untypables_if_apply_and_extract_variant_type_groundtruth:
-	input:
-		vcf = get_truthset_given_method,
-		untypable = "external-eval/{callset}/vcf/{sample}-unique_{method}.tsv"
-	output:
-		vcf="external-eval/{callset}/{sample}/groundtruth-{filter}_{method}.vcf.gz",
-		tbi="external-eval/{callset}/{sample}/groundtruth-{filter}_{method}.vcf.gz.tbi"
-	wildcard_constraints:
-		sample = "|".join(truthsets),
-		callset= "|".join(callsets),
-		filter="typable|all"
-	resources:
-		mem_total_mb=30000
-	conda:
-		"../envs/genotyping.yml"
-	params:
-		untypables = lambda wildcards: f" python workflow/scripts/skip-untypable.py external-eval/{wildcards.callset}/vcf/{wildcards.sample}-unique_{wildcards.method}.tsv |" if wildcards.filter == 'typable' else "",
-		vartype = lambda wildcards: "snp-indel" if wildcards.method == 'vcfeval' else "sv"
-	shell:
-		"""
-		bcftools norm -m -any {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {params.vartype} | bgzip -c > {output.vcf}
-		tabix -p vcf {output.vcf}
-		"""
-        
-def get_callset_given_method(wildcards):
-    if wildcards.method == 'vcfeval':
-        return f"external-eval/{wildcards.callset}/{wildcards.sample}/{wildcards.version}/{wildcards.coverage}/genotyping-biallelic_snp-indel.vcf.gz"
-    if wildcards.method == 'truvari':
-        return f"external-eval/{wildcards.callset}/{wildcards.sample}/{wildcards.version}/{wildcards.coverage}/genotyping-biallelic_sv.vcf.gz"
-
-
-# remove untypables from genotyped callset and extract only variants of a specific type.
-rule remove_untypables_if_apply_and_extract_variant_type_genotyped_callset:
-	input:
-		vcf= get_callset_given_method,
-		untypable = "external-eval/{callset}/vcf/{sample}-unique_{method}.tsv"
-	output:
-		vcf="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz",
-		tbi="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz.tbi"
-	wildcard_constraints:
-		callset= "|".join(callsets),
-		filter="typable|all",
-		version="|".join(versions_external),
-		coverage="|".join(coverages)
-	resources:
-		mem_total_mb=30000
-	conda:
-		"../envs/genotyping.yml"
-	params:
-		untypables = lambda wildcards: f"| python workflow/scripts/skip-untypable.py external-eval/{wildcards.callset}/vcf/{wildcards.sample}-unique_{wildcards.method}.tsv |" if wildcards.filter == "typable" else "",
-		vartype = lambda wildcards: "snp-indel" if wildcards.method == 'vcfeval' else "sv"
-	shell:
-		"""
-		bcftools norm -m -any {input.vcf} {params.untypables} python workflow/scripts/extract-varianttype.py {params.vartype} | bgzip -c > {output.vcf}
-		tabix -p vcf {output.vcf}
-		"""
-
-####################################################################################################
-# prepare beds for biallelic and complex graph regions
-# AND prepare regions (stratification BED files intersected with callable regions as defined by the BED 
-# files that come with each ground truth)
-####################################################################################################
+################################################################
+##### Prepare beds for biallelic and complex graph regions #####
+################################################################
 
 rule alleles_per_bubble:
 	input:
 		"external-eval/{callset}/{sample}/input-panel/panel_multi.vcf"
 	output:
-		plot = "external-eval/{callset}/{sample}/alleles-per-bubble.pdf",
-		bed = "external-eval/{callset}/{sample}/complex-bubbles.bed"
+		plot = "external-eval/{callset}/{sample}/bed-files/alleles-per-bubble.pdf",
+		bed = "external-eval/{callset}/{sample}/bed-files/complex-bubbles.bed"
 	conda:
 		"../envs/genotyping.yml"
 	resources:
@@ -443,11 +344,11 @@ rule alleles_per_bubble:
 
 rule prepare_beds:
 	input:
-		bed = "external-eval/{callset}/{sample}/complex-bubbles.bed",
+		bed = "external-eval/{callset}/{sample}/bed-files/complex-bubbles.bed",
 		fai = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']
 	output:
-		bed = "external-eval/{callset}/{sample}/biallelic-bubbles.bed",
-		tmp = temp("external-eval/{callset}/{sample}/biallelic-bubbles.fai")
+		bed = "external-eval/{callset}/{sample}/bed-files/biallelic-bubbles.bed",
+		tmp = temp("external-eval/{callset}/{sample}/bed-files/biallelic-bubbles.fai")
 	conda:
 		"../envs/genotyping.yml"
 	shell:
@@ -461,9 +362,9 @@ def define_bed_given_region(wildcards):
 	if wildcards.region == 'all':
 		return config["callsets"][wildcards.callset]["truthsets"][wildcards.sample]["callable_regions"]
 	elif wildcards.region == 'multi':
-		return f"external-eval/{wildcards.callset}/{wildcards.sample}/complex-bubbles.bed"
+		return f"external-eval/{wildcards.callset}/{wildcards.sample}/bed-files/complex-bubbles.bed"
 	elif wildcards.region == 'bi':
-		return f"external-eval/{wildcards.callset}/{wildcards.sample}/biallelic-bubbles.bed"
+		return f"external-eval/{wildcards.callset}/{wildcards.sample}/bed-files/biallelic-bubbles.bed"
 	else:
 		print("Region not in [all, multi, bi] ")
 
@@ -486,17 +387,79 @@ rule prepare_evaluation_beds:
 	shell:
 		"bedtools intersect -a {input.callable_regions} -b {input.bed} > {output}"
 
-####################################################################################################
-###  Compute Precision/Recall for both snp-indel vs. SVs
-####################################################################################################
+
+
+#############################################################
+###########      Postprocessing & Evaluation     ############
+##     --> compare genotyping results to the truthset,    ### 
+###      excluding untypable variants (if desired),       ###
+### which cannot be genotyped correctly by a re-genotyper ###
+#############################################################
+
+rule remove_untypables_if_apply_and_extract_variant_type_truthset:
+	input:
+		vcf = get_truthset_given_method,
+		untypable = "external-eval/{callset}/{sample}/truthset/untypables_{method}.tsv"
+	output:
+		vcf="external-eval/{callset}/{sample}/truthset/truthset-{filter}_{method}.vcf.gz",
+		tbi="external-eval/{callset}/{sample}/truthset/truthset-{filter}_{method}.vcf.gz.tbi"
+	wildcard_constraints:
+		sample = "|".join(truthsets),
+		callset= "|".join(callsets),
+		filter="typable|all"
+	resources:
+		mem_total_mb=30000
+	conda:
+		"../envs/genotyping.yml"
+	params:
+		untypables = lambda wildcards: f" python workflow/scripts/skip-untypable.py external-eval/{wildcards.callset}/{wildcards.sample}/truthset/untypables_{wildcards.method}.tsv |" if wildcards.filter == 'typable' else "",
+		vartype = lambda wildcards: "snp-indel" if wildcards.method == 'vcfeval' else "sv"
+	shell:
+		"""
+		bcftools norm -m -any {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {params.vartype} | bgzip -c > {output.vcf}
+		tabix -p vcf {output.vcf}
+		"""
+        
+def get_callset_given_method(wildcards):
+    if wildcards.method == 'vcfeval':
+        return f"external-eval/{wildcards.callset}/{wildcards.sample}/{wildcards.version}/{wildcards.coverage}/genotyping-biallelic_snp-indel.vcf.gz"
+    if wildcards.method == 'truvari':
+        return f"external-eval/{wildcards.callset}/{wildcards.sample}/{wildcards.version}/{wildcards.coverage}/genotyping-biallelic_sv.vcf.gz"
+
+
+rule remove_untypables_if_apply_and_extract_variant_type_genotyped_callset:
+	input:
+		vcf= get_callset_given_method,
+		untypable = "external-eval/{callset}/{sample}/truthset/untypables_{method}.tsv"
+	output:
+		vcf="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz",
+		tbi="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz.tbi"
+	wildcard_constraints:
+		callset= "|".join(callsets),
+		filter="typable|all",
+		version="|".join(versions_external),
+		coverage="|".join(coverages)
+	resources:
+		mem_total_mb=30000
+	conda:
+		"../envs/genotyping.yml"
+	params:
+		untypables = lambda wildcards: f"| python workflow/scripts/skip-untypable.py external-eval/{wildcards.callset}/{wildcards.sample}/truthset/untypables_{wildcards.method}.tsv |" if wildcards.filter == "typable" else "",
+		vartype = lambda wildcards: "snp-indel" if wildcards.method == 'vcfeval' else "sv"
+	shell:
+		"""
+		bcftools norm -m -any {input.vcf} {params.untypables} python workflow/scripts/extract-varianttype.py {params.vartype} | bgzip -c > {output.vcf}
+		tabix -p vcf {output.vcf}
+		"""
+
 
 # compute precision/recall for small variants
 rule vcfeval_callsets:
 	input:
 		callset="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_vcfeval.vcf.gz",
 		callset_tbi="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_vcfeval.vcf.gz.tbi",
-		baseline="external-eval/{callset}/{sample}/groundtruth-{filter}_vcfeval.vcf.gz",
-		baseline_tbi="external-eval/{callset}/{sample}/groundtruth-{filter}_vcfeval.vcf.gz.tbi",
+		baseline="external-eval/{callset}/{sample}/truthset/truthset-{filter}_vcfeval.vcf.gz",
+		baseline_tbi="external-eval/{callset}/{sample}/truthset/truthset-{filter}_vcfeval.vcf.gz.tbi",
 		regions= "external-eval/{callset}/{sample}/bed-files/{sample}_{region}.bed",
 		reference=lambda wildcards: config['callsets'][wildcards.callset]['reference'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai'],
@@ -535,8 +498,8 @@ rule truvari_callsets:
 	input:
 		callset="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_truvari.vcf.gz",
 		callset_tbi="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_truvari.vcf.gz.tbi",
-		baseline="external-eval/{callset}/{sample}/groundtruth-{filter}_truvari.vcf.gz",
-		baseline_tbi="external-eval/{callset}/{sample}/groundtruth-{filter}_truvari.vcf.gz.tbi",
+		baseline="external-eval/{callset}/{sample}/truthset/truthset-{filter}_truvari.vcf.gz",
+		baseline_tbi="external-eval/{callset}/{sample}/truthset/truthset-{filter}_truvari.vcf.gz.tbi",
 		regions= "external-eval/{callset}/{sample}/bed-files/{sample}_{region}.bed",
 		reference=lambda wildcards: config['callsets'][wildcards.callset]['reference'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']

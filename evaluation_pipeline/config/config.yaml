@@ -23,9 +23,10 @@ callsets:
         repeat_regions: "resources/ucsc-simple-repeats.bed"
         # samples to run a leave-one-out experiment on
         leave_one_out_samples: # specify the samples to evaluate on
-            - NA12878
+            - NA24385
         truthsets: # specify the samples to (externally) evaluate on
-            NA12878: 
+            NA24385: 
+                #path: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" # benchmark dataset used a truth for external evaluation 
                 path: "reduced-data/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" # benchmark dataset used a truth for external evaluation 
                 callable_regions: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed" # path to BED with callable regions
                 vartype: # options: snp-indel, sv
@@ -33,16 +34,13 @@ callsets:
                     - sv
                 regions: # options: all, multi, bi
                     - all
-                    #- multi
-                    #- bi
                 filters: # options: all, typable
-                    - all
                     - typable
-
-
+                    
 
 # read data. File required that specifies a sample name, path to FASTA/FASTQ data and superpopulation:
 # FamilyID	SampleID	FatherID	MotherID	Population	Superpopulation	Sample_Illumina
+#reads: "resources/reads.tsv"
 reads: "resources/reads_reduced.tsv"
 
 
