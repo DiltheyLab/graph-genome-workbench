@@ -20,15 +20,12 @@ for line in open(config['reads'], 'r'):
 	reads_leave_one_out[sample_name] = read_path
 
 allowed_variants = ['snp-indel', 'sv']
-coverages = ['full'] + [c for c in config['downsampling']]
-versions_external = [v for v  in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()]
-
-truthsets_sv = [t for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys() if 'sv' in config["callsets"][c]["truthsets"][t]["vartype"]]
-truthsets_small = [t for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys() if "snp-indel" in config["callsets"][c]["truthsets"][t]["vartype"]]
+truthsets_sv = [t for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys() if 'sv' in config["callsets"][c]["external"][t]["vartype"]]
+truthsets_small = [t for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys() if "snp-indel" in config["callsets"][c]["external"][t]["vartype"]]
 
 #truthsets = truthsets_sv + truthsets_small
 
-truthsets = [t for c in config["callsets"].keys() for t in config["callsets"][c]["truthsets"].keys()]
+truthsets = [t for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys()]
 callsets = [s for s in config['callsets'].keys()]
 ## genotyped callsets & regions to be determined during execution
 
@@ -55,7 +52,7 @@ for c in callsets:
 ########################################################
 
 ### Preprocess Multiallelic (Pangenome)
-rule prepare_panel:
+rule change_prepare_panel:
 	input:
 		vcf = lambda wildcards: config['callsets'][wildcards.callset][wildcards.representation]
 	output:
@@ -70,7 +67,7 @@ rule prepare_panel:
 # run pangenie
 ## If in input reads = lambda wildcards: "results/downsampling/{callset}/{coverage}/{sample}_{coverage}.fa.gz",
 ## the reads will be aligned before, but that's what we need, since graphtyper is a mapped-based approach (i.e. we need the aligned reads anyways if we want to apply Graphtyper). Just for Pangenie, it's not necessary.
-rule pangenie:
+rule change_pangenie:
 	input:
 		reads = lambda wildcards: reads_leave_one_out[wildcards.sample] if wildcards.coverage == 'full' else "data/downsampling/{callset}/{coverage}/{sample}_{coverage}.fa.gz",
 		fasta = lambda wildcards: config['callsets'][wildcards.callset]['reference'],
@@ -100,7 +97,7 @@ rule pangenie:
         """
 
 # run pangenie in the modularized way (> v2.1.1)
-rule pangenie_modules:
+rule change_pangenie_modules:
 	input:
 		reads = lambda wildcards: reads_leave_one_out[wildcards.sample] if wildcards.coverage == 'full' else "results/downsampling/{callset}/{coverage}/{sample}_{coverage}.fa.gz",
 		fasta = lambda wildcards: config['callsets'][wildcards.callset]['reference'],
@@ -132,7 +129,7 @@ rule pangenie_modules:
         """
 
 # convert genotyped VCF to biallelic representation
-rule convert_genotypes_to_biallelic:
+rule change_convert_genotypes_to_biallelic:
 	input:
 		genotyped_vcf = "external-eval/{callset}/{sample}/{version}/{coverage}/genotyping.vcf",
 		biallelic = lambda wildcards: config['callsets'][wildcards.callset]['bi']
@@ -327,7 +324,7 @@ rule determine_unique:
 ##### Prepare beds for biallelic and complex graph regions #####
 ################################################################
 
-rule alleles_per_bubble:
+rule change_alleles_per_bubble:
 	input:
 		"external-eval/{callset}/{sample}/input-panel/panel_multi.vcf"
 	output:
@@ -342,7 +339,7 @@ rule alleles_per_bubble:
 		"cat {input} | python workflow/scripts/variant-statistics.py {output.plot} 1 > {output.bed}"
 
 
-rule prepare_beds:
+rule change_prepare_beds:
 	input:
 		bed = "external-eval/{callset}/{sample}/bed-files/complex-bubbles.bed",
 		fai = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']
@@ -369,7 +366,7 @@ def define_bed_given_region(wildcards):
 		print("Region not in [all, multi, bi] ")
 
 
-rule prepare_evaluation_beds:
+rule change_prepare_evaluation_beds:
 	input:
 		callable_regions = lambda wildcards: config['callsets'][wildcards.callset]["truthsets"][wildcards.sample]["callable_regions"],
 		bed = define_bed_given_region
@@ -436,9 +433,7 @@ rule remove_untypables_if_apply_and_extract_variant_type_genotyped_callset:
 		tbi="external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz.tbi"
 	wildcard_constraints:
 		callset= "|".join(callsets),
-		filter="typable|all",
-		version="|".join(versions_external),
-		coverage="|".join(coverages)
+		filter="typable|all"
 	resources:
 		mem_total_mb=30000
 	conda:

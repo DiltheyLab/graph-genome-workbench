@@ -7,6 +7,15 @@ truvari = config['programs']['truvari']
 
 # parameters
 chromosomes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X"]
+ref_chromosomes = {}
+for c in config['callsets'].keys():
+    ref_chromosomes[c] = []
+    for line in open(config['callsets'][c]['reference_fai'], 'r'):
+        fields = line.split()
+        chr_number = fields[0].split('chr')[1].strip()
+        if chr_number in chromosomes:
+            ref_chromosomes[c].append(chr_number)
+
 bayestyper_reference_canon=config['utils']['bayestyper_reference_canon']
 bayestyper_reference_decoy=config['utils']['bayestyper_reference_decoy']
 
@@ -24,11 +33,10 @@ for line in open(config['reads'], 'r'):
 	sex_per_sample[sample_name] = 'M' if sample_sex == 1 else 'F'
 	reads_leave_one_out[sample_name] = read_path
 
-allowed_variants = ['snp', 'indels', 'large-deletion', 'large-insertion']
 callsets_leave_one_out = [s for s in config['callsets'].keys()]
+allowed_variants = ['snp', 'indels', 'large-insertion', 'large-deletion']
 coverages_leave_one_out = ['full'] + [c for c in config['downsampling']]
 versions_leave_one_out = [v for v  in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] + ['bayestyper', 'graphtyper'] # , 'graphtyper'
-
 
 ################################################################
 ######   prepare input panel and ground truth genotypes  #######
@@ -52,7 +60,7 @@ rule remove_missing:
 	shell:
 		"zcat {input} | python3 workflow/scripts/remove-missing.py {wildcards.sample} > {output}"
 
-### We need to annotated the biallelic input panel to not forget ID variants in graphtyper postprocess
+### We need to annotate the biallelic input panel to not forget ID variants in graphtyper postprocess
 rule prepare_panel:
 	input:
 		"results/leave-one-out/{callset}/preprocessed-vcfs/{sample}-{callset}_{representation}_no-missing.vcf.gz"
@@ -352,7 +360,7 @@ rule graphtyper_preprocess:
 		vcf=temp("results/leave-one-out/{callset}/input-panel/panel-{sample}-{callset}_bi_chr{chrom}_{variant}.vcf")
 	wildcard_constraints:
 		chrom="X|Y|[0-9]+",
-		variant="indel|sv"
+		variant="snp-indel|sv"
 	conda:
 		"../envs/genotyping.yml"
 	shell:
@@ -360,7 +368,6 @@ rule graphtyper_preprocess:
 		zcat {input.vcf} | python3 workflow/scripts/extract-varianttype.py {wildcards.variant} > {output}
 		"""
 
-## Remark: indel contains all variants that are not SVs, including SNPs, as well.
 rule graphtyper_genotype:
     input:
         vcf = "results/leave-one-out/{callset}/input-panel/panel-{sample}-{callset}_bi_chr{chrom}_{variant}.vcf.gz",
@@ -374,7 +381,7 @@ rule graphtyper_genotype:
         dir="results/leave-one-out/{callset}/graphtyper/{sample}/{coverage}/temp/{variant}"
     wildcard_constraints:
         chrom="|".join(chromosomes),
-        variant="indel|sv"
+        variant="snp-indel|sv"
         #chrom="(X|Y|[0-9]+)",
     log:
         "results/leave-one-out/{callset}/graphtyper/{sample}/{coverage}/temp/{variant}/chr{chrom}.log"
@@ -393,7 +400,7 @@ rule graphtyper_genotype:
             (/usr/bin/time -v {graphtyper} genotype_sv {input.fasta} {input.vcf} --sam={input.bam} --region=chr{wildcards.chrom}  --output={params.dir} --threads={threads} --force_no_filter_zero_qual) &> {log}
             bcftools concat -a {params.dir}/chr{wildcards.chrom}/*.vcf.gz | python3 workflow/scripts/graphtyper-postprocess.py {input.vcf} > {output.vcf}
         else
-            if [ "{wildcards.variant}" == "indel" ]; then
+            if [ "{wildcards.variant}" == "snp-indel" ]; then
                 (/usr/bin/time -v {graphtyper} genotype {input.fasta} --vcf={input.vcf} --sam={input.bam} --region=chr{wildcards.chrom} --no_decompose --verbose --output={params.dir} --threads={threads} --force_no_filter_zero_qual) &> {log}
                 bcftools concat -a {params.dir}/chr{wildcards.chrom}/*.vcf.gz > {output.vcf}
             fi
@@ -403,7 +410,7 @@ rule graphtyper_genotype:
 		
 rule merge_vcfs_all_chromosomes_and_normalize:
     input:
-        vcfs=lambda wildcards: expand("results/leave-one-out/{{callset}}/graphtyper/{{sample}}/{{coverage}}/temp/{variant}/graphtyper-{{sample}}_genotyping.chr{chrom}.vcf.gz", chrom=chromosomes, variant=["indel", "sv"]),
+        vcfs=lambda wildcards: expand("results/leave-one-out/{{callset}}/graphtyper/{{sample}}/{{coverage}}/temp/{variant}/graphtyper-{{sample}}_genotyping.chr{chrom}.vcf.gz", chrom=ref_chromosomes[wildcards.callset], variant=["snp-indel", "sv"]),
         reference=lambda wildcards: config['callsets'][wildcards.callset]['reference']
     output: 
         "results/leave-one-out/{callset}/graphtyper/{sample}/{coverage}/temp/graphtyper-{sample}_genotyping.vcf"
@@ -451,9 +458,9 @@ rule prepare_beds:
 
 def get_panel_vcf(wildcards):
 	if wildcards.version == 'graphtyper':
-		return "results/leave-one-out/{callset}/input-panel/panel-{sample}-{callset}_bi.vcf"
+		return "results/leave-one-out/{callset}/input-panel/panel-{sample}-{callset}_bi.vcf.gz"
 	else:
-		return "results/leave-one-out/{callset}/input-panel/panel-{sample}-{callset}_multi_norm.vcf"
+		return "results/leave-one-out/{callset}/input-panel/panel-{sample}-{callset}_multi_norm.vcf.gz"
 
 # convert genotyped VCF to biallelic representation
 rule convert_genotypes_to_biallelic:
@@ -524,9 +531,9 @@ rule rtg_format:
 
 
 def region_to_bed(wildcards):
-	if wildcards.regions == "biallelic":
+	if wildcards.regions == "bi":
 		return "results/leave-one-out/{callset}/biallelic-bubbles.bed".format(callset=wildcards.callset)
-	if wildcards.regions == "multiallelic":
+	if wildcards.regions == "multi":
 		return "results/leave-one-out/{callset}/complex-bubbles.bed".format(callset=wildcards.callset)
 	assert(False)
 
@@ -547,7 +554,7 @@ rule vcfeval:
 	priority: 1
 	wildcard_constraints:
 		sample = "|".join([s for s in reads_leave_one_out.keys()]),
-		regions = "biallelic|multiallelic",
+		regions = "bi|multi",
 		vartype = "snp|indels"
 	params:
 		tmp = "results/leave-one-out/{callset}/{version}/{sample}/{coverage}/precision-recall-typable/{regions}_{vartype}_tmp",
@@ -562,7 +569,7 @@ rule vcfeval:
 		runtime_min = 40
 	shell:
 		"""
-		{rtg} vcfeval -b {input.baseline} -c {input.callset} -t {input.sdf} -o {params.tmp} --ref-overlap --evaluation-regions {input.regions} {params.which} --Xmax-length 30000 --threads {threads} &> {log}
+		(/usr/bin/time -v {rtg} vcfeval -b {input.baseline} -c {input.callset} -t {input.sdf} -o {params.tmp} --ref-overlap --evaluation-regions {input.regions} {params.which} --Xmax-length 30000 --threads {threads}) &> {log}
 		mv {params.tmp}/* {params.outname}/
 		rm -r {params.tmp}
 		"""
@@ -584,7 +591,7 @@ rule truvari:
 	priority: 1
 	wildcard_constraints:
 		sample = "|".join([s for s in reads_leave_one_out.keys()]),
-		regions = "biallelic|multiallelic",
+		regions = "bi|multi",
 		vartype = "large-deletion|large-insertion"
 	params:
 		tmp = "results/leave-one-out/{callset}/{version}/{sample}/{coverage}/precision-recall-typable/{regions}_{vartype}_tmp",
@@ -598,7 +605,7 @@ rule truvari:
 		runtime_min = 40
 	shell:
 		"""
-		{truvari} bench -b {input.baseline} -c {input.callset} -f {input.reference} -o {params.tmp} --pick multi --includebed {input.regions} -r 2000 --no-ref a -C 2000 --passonly &> {log} 
+		(/usr/bin/time -v {truvari} bench -b {input.baseline} -c {input.callset} -f {input.reference} -o {params.tmp} --pick multi --includebed {input.regions} -r 2000 --no-ref a -C 2000 --passonly) &> {log} 
 		mv {params.tmp}/* {params.outname}/
 		rm -r {params.tmp}
 		python3 workflow/scripts/parse_json_to_txt.py {output.summary_json} > {output.summary_txt}
@@ -617,7 +624,7 @@ rule collect_typed_variants:
 		"../envs/genotyping.yml"
 	wildcard_constraints:
 		sample = "|".join([s for s in reads_leave_one_out.keys()]),
-		regions = "biallelic|multiallelic",
+		regions = "bi|multi",
 		vartype = "|".join(allowed_variants)
 	resources:
 		mem_total_mb=50000
@@ -643,7 +650,7 @@ rule genotype_concordances:
 		"../envs/genotyping.yml"
 	wildcard_constraints:
 		sample = "|".join([s for s in reads_leave_one_out.keys()]),
-		regions = "biallelic|multiallelic",
+		regions = "bi|multi",
 		vartype = "|".join(allowed_variants)
 	log:
 		"results/leave-one-out/{callset}/{version}/{sample}/{coverage}/concordance/{regions}_{vartype}/summary.log"
@@ -689,7 +696,7 @@ rule plotting_versions:
 		"results/leave-one-out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf"
 	wildcard_constraints:
 		metric="concordance|precision-recall-typable|untyped",
-		regions="biallelic|multiallelic"
+		regions="bi|multi"
 	priority: 1
 	conda:
 		"../envs/genotyping.yml"
@@ -707,7 +714,7 @@ rule plotting_versions_conc_vs_untyped:
 	output:
 		"results/leave-one-out/{callset}/plots/comparison-versions/concordance-vs-untyped/concordance-vs-untyped_{coverage}_{regions}.pdf"
 	wildcard_constraints:
-		regions="biallelic|multiallelic"
+		regions="bi|multi"
 	priority: 1
 	conda:
 		"../envs/genotyping.yml"
@@ -726,7 +733,7 @@ rule plotting_coverages:
 		"results/leave-one-out/{callset}/plots/comparison-coverages/{metric}/{metric}_{version}_{regions}.pdf"
 	wildcard_constraints:
 		metric="concordance|precision-recall-typable|untyped",
-		regions="biallelic|multiallelic"
+		regions="bi|multi"
 	priority: 1
 	conda:
 		"../envs/genotyping.yml"
@@ -758,8 +765,8 @@ rule collect_runtime_info_bayestyper:
 rule collect_runtime_info_graphtyper:
 	input:
 		graphtyper_aligning_reads = "results/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem.log",
-		graphtyper_indexing_reads = lambda wildcards: expand("results/downsampling/{{callset}}/{{coverage}}/aligned/{{sample}}_full.chr{chrom}-index.log", chrom=chromosomes),
-		graphtyper_genotype = lambda wildcards: expand("results/leave-one-out/{{callset}}/graphtyper/{{sample}}/{{coverage}}/temp/{variant}/chr{chrom}.log", chrom=chromosomes, variant=["indel", "sv"])
+		graphtyper_indexing_reads = lambda wildcards: expand("results/downsampling/{{callset}}/{{coverage}}/aligned/{{sample}}_full.chr{chrom}-index.log", chrom=ref_chromosomes[wildcards.callset]),
+		graphtyper_genotype = lambda wildcards: expand("results/leave-one-out/{{callset}}/graphtyper/{{sample}}/{{coverage}}/temp/{variant}/chr{chrom}.log", chrom=ref_chromosomes[wildcards.callset], variant=["snp-indel", "sv"])
 	output:
 		"results/leave-one-out/{callset}/graphtyper/{sample}/{coverage}/graphtyper-{sample}.log"
 	conda:

@@ -13,18 +13,19 @@ callsets:
         reference: "reduced-data/GRCh38_full_analysis_set_plus_decoy_hla.fa"
         #reference_fai: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai"
         reference_fai: "reduced-data/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai"
-        # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion
-        variants:
-            - snp 
-            - indels
-            - large-deletion
-            - large-insertion
-        # repeat annotations in BED format
-        repeat_regions: "resources/ucsc-simple-repeats.bed"
-        # samples to run a leave-one-out experiment on
-        leave_one_out_samples: # specify the samples to evaluate on
-            - NA24385
-        truthsets: # specify the samples to (externally) evaluate on
+        leave1out: # specify the samples to evaluate on
+            NA24385:
+                regions: # options: all, multi, bi
+                    - multi
+                    - bi
+                filters: # options: all, typable
+                    - typable
+                vartype: # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion
+                    - snp 
+                    - indels
+                    - large-deletion
+                    - large-insertion
+        external: # specify the samples to (externally) evaluate on
             NA24385: 
                 #path: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" # benchmark dataset used a truth for external evaluation 
                 path: "reduced-data/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" # benchmark dataset used a truth for external evaluation 
