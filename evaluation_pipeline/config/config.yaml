@@ -16,6 +16,7 @@ callsets:
         leave1out: # specify the samples to evaluate on
             NA24385:
                 regions: # options: all, multi, bi
+                    - all
                     - multi
                     - bi
                 filters: # options: all, typable

@@ -190,7 +190,7 @@ rule bwa_index_fasta:
 	output:
 		"data/downloaded/fasta/{filename}.fa" + ".ann"
 	log:
-		"data/downloaded/fasta/{filename}-indexing.log"
+		"logs/data/downloaded/fasta/{filename}-indexing.log"
 	resources:
 		mem_total_mb=5000
 	shell:

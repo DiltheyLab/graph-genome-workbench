@@ -21,3 +21,7 @@
 **/external-eval_*
 **/reduced-data
 **/__pycache__
+**/results_old
+**/logs
+**/preprocessing
+**/genotyping

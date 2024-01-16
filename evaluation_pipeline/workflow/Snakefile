@@ -1,7 +1,9 @@
-include: 'rules/external-val.smk'
 include: 'rules/download-data.smk'
 include: 'rules/downsample-reads.smk'
-include: 'rules/leave-one-out-experiments.smk'
+include: 'rules/preprocessing.smk'
+include: 'rules/genotyping.smk'
+include: 'rules/evaluation.smk'
+#include: 'rules/external.smk'
 #include: 'rules/utils.smk'
 
 coverages = ['full'] + config['downsampling']
@@ -31,21 +33,35 @@ def leave1out_eval_files(wildcards):
         for cov in coverages:
             for v in versions_to_run:
                 for r in regions_leave1out:
-                    for t in samples_leave1out:
-                        for f in filters_leave1out:
-                            for var in variants_leave1out:
-                                if var in ['snp', 'indels']:
-                                    filenames.append("results/leave-one-out/" + c + "/" + v + "/" + t + "/" + cov + "/precision-recall-" + f + "/" + r + "_" + var + "/summary.txt")
-                                if var in ['large-insertion', 'large-deletion']:
-                                    filenames.append("results/leave-one-out/" + c + "/" + v + "/" + t + "/" + cov + "/precision-recall-" + f + "/" + r + "_" + var + "/summary.json")
+                    for p in ['leave1out', 'external']:
+                        for t in samples_leave1out:
+                            for f in filters_leave1out:
+                                for var in variants_leave1out:
+                                    if var in ['snp', 'indels']:
+                                        filenames.append("evaluation/" + c + "/" + t + "/" + p + "/" + v + "-" + cov + "-" + f + "-" + r + "-" + var + "/summary.txt")
+                                    if var in ['large-insertion', 'large-deletion']:
+                                        filenames.append("evaluation/" + c + "/" + t + "/" + p + "/" + v + "-" + cov + "-" + f + "-" + r + "-" + var + "/summary.json")
+                                        
     return filenames
 
-rule leave_one_out:
-	input:
-		leave1out_eval_files,
-        #expand("results/leave-one-out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
-		#expand("results/leave-one-out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic']),
+rule leave1out:
+    input:
+        leave1out_eval_files,
+        #expand("evaluation/{callset}/{sample}/{pipeline}/{version}-{coverage}-{filter}-{region}-{vartype}/summary.json", callset=['HGSVC'], sample=['NA24385'], pipeline=['leave1out'], version=['pangenie.v3'], filter=['typable'], vartype=['snp', 'indels', 'large-insertion', 'large-deletion']),
+        #expand("genotyping/{callset}/{sample}/{pipeline}/truthset/truthset-{filter}_{vartype}.vcf.gz", callset=['HGSVC'], sample=['NA24385'], pipeline=['leave1out'], filter=['typable'], vartype=['snp', 'indels', 'large-insertion', 'large-deletion']),
+        #expand("preprocessing/{callset}/{sample}/{pipeline}/untypables/untypables.tsv", callset=['HGSVC'], pipeline=['leave1out'], sample=['NA24385']),
+        #expand("preprocessing/{callset}/{sample}/{pipeline}/untypables/untypables_{vartype}.tsv", callset=['HGSVC'], pipeline=['leave1out'], sample=['NA24385'], vartype=['snp-indel', 'sv']),
+        #expand("genotyping/{callset}/{sample}/{version}/{coverage}/genotyping.vcf", callset=['HGSVC'], version=['pangenie.v3'], sample=['NA24385'], coverage=['full']),
+        ##
+        #expand("results/leave1out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
+        #expand("results/leave1out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic']),
 		
+
+
+
+
+
+
 # generate all combinations of desired output files to be produced
 def external_eval_files(wildcards):
     filenames = []
@@ -62,7 +78,7 @@ def external_eval_files(wildcards):
 
 
 
-rule external_eval:
+rule external:
     input:
         external_eval_files,
         #expand("external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA24385'], version=['pangenie.v3'], coverage=['full'], filter=['typable'], method=['vcfeval', 'truvari']),
