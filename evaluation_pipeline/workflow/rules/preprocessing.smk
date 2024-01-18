@@ -44,7 +44,7 @@ rule remove_missing:
 	wildcard_constraints:
 		representation = "bi|multi"
 	shell:
-		"zcat {input} | python3 workflow/scripts/remove-missing.py {wildcards.sample} > {output}"
+		"bcftools view {input} | python3 workflow/scripts/remove-missing.py {wildcards.sample} > {output}"
 
 ### We need to annotate the biallelic input panel to not forget ID variants in graphtyper postprocess
 rule prepare_panel:
@@ -60,24 +60,23 @@ rule prepare_panel:
 	params: 
 		lambda wildcards: "| python3 workflow/scripts/annotate-ids.py" if wildcards.representation == 'bi' else ""
 	log:
-		"logs/preprocessing/{callset}/input-panel/panel-{sample}-{callset}_{representation}.log"
+		"logs/preprocessing/{callset}/{sample}/input-panel/panel_{representation}.log"
 	resources:
 		mem_total_mb=20000
 	shell:
 		"""
 		(/usr/bin/time -v bcftools view --samples ^{wildcards.sample} {input} | bcftools view --min-ac 1 {params} > {output} ) &> {log}
 		"""
+
 rule normalize_input_panel:
 	input:
 		vcf = "preprocessing/{callset}/{sample}/input-panel/panel_multi.vcf",
 		reference = lambda wildcards: config['callsets'][wildcards.callset]['reference']
 	output:
 		vcf = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf",
-		vcf_gz = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf.gz"
 	shell:
 		"""
 		bcftools norm -m +any -d all -f {input.reference} {input.vcf} | bcftools sort > {output.vcf}
-		bgzip -c {output.vcf} > {output.vcf_gz}
 		"""
 
 rule prepare_truth_leave1out_to_biallelic:
@@ -191,7 +190,7 @@ rule determine_false_negatives:
 # intersect the sets of FNs computed for each panel sample. The intersection then defines the set of unique/untypable variants
 rule determine_unique:
 	input:
-		truthset = "preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic-annotated.vcf.gz",
+		truthset = "preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic.vcf.gz",
 		samples = lambda wildcards: expand("preprocessing/{{callset}}/{{sample}}/{{pipeline}}/untypables/samples/{sample}/{{vartype}}/fn.vcf.gz", sample=[s for s in assembly_samples[wildcards.callset][wildcards.pipeline][wildcards.sample] if not s == "CHM13"])
 	output:
 		unique_tsv="preprocessing/{callset}/{sample}/{pipeline}/untypables/untypables_{vartype}.tsv",

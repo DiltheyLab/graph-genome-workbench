@@ -18,6 +18,7 @@ rule align_reads:
 		fasta = lambda wildcards: config['callsets'][wildcards.callset]['reference'],
 		fasta_ann = lambda wildcards: config['callsets'][wildcards.callset]['reference'] + ".ann"
 	output:
+		unsorted_bam = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_unsorted.bam",
 		bam = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam"
 	conda:
 		"../envs/downsampling.yml"
@@ -27,10 +28,12 @@ rule align_reads:
 		runtime_min = 1
 	threads: 27
 	log:
-		mem="preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem.log"
+		bwa_mem="preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem_unsorted.log"
+		sorted_mem="preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem.log"
 	shell:
 		"""
-		(/usr/bin/time -v {bwa} mem -t {threads} -M {input.fasta} -R "@RG\\tID:{wildcards.sample}\\tLB:lib1\\tPL:illumina\\tPU:unit1\\tSM:{wildcards.sample}" {input.reads} | samtools view -bS | samtools sort -o {output.bam} - ) &> {log.mem}
+		(/usr/bin/time -v {bwa} mem -t {threads} -M {input.fasta} -R "@RG\\tID:{wildcards.sample}\\tLB:lib1\\tPL:illumina\\tPU:unit1\\tSM:{wildcards.sample}" {input.reads} | samtools view -bS ) &> {log.bwa_mem}
+		(/usr/bin/time -v samtools sort -o {output.bam} {output.unsorted_bam} - ) &> {log.sorted_mem}
 		"""
 
 ## split BAM by chromosome

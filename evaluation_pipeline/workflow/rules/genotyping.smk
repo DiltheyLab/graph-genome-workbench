@@ -4,13 +4,12 @@ for c in config['callsets'].keys():
     ref_chromosomes[c] = []
     for line in open(config['callsets'][c]['reference_fai'], 'r'):
         fields = line.split()
-        chr_number = fields[0].split('chr')[1].strip()
-        if chr_number in chromosomes:
+        if fields[0] in ['chr' + i for i in chromosomes]:
+            chr_number = fields[0].split('chr')[1].strip()
             ref_chromosomes[c].append(chr_number)
 
 bayestyper_reference_canon=config['utils']['bayestyper_reference_canon']
 bayestyper_reference_decoy=config['utils']['bayestyper_reference_decoy']
-
 
 # stores paths to reads
 reads_leave_one_out = {}
@@ -26,7 +25,22 @@ for line in open(config['reads'], 'r'):
 	sex_per_sample[sample_name] = 'M' if sample_sex == 1 else 'F'
 	reads_leave_one_out[sample_name] = read_path
 
-#callsets = [s for s in config['callsets'].keys()]
+
+########################################################
+##################    Util functions    ################
+########################################################
+rule compress_vcf:
+	input:
+		"preprocessing/{filename}.vcf"
+	output:
+		vcf = "preprocessing/{filename}.vcf.gz",
+		tbi = "preprocessing/{filename}.vcf.gz.tbi"
+	priority: 1
+	shell:
+		"""
+		bgzip -c {input} > {output.vcf}
+		tabix -p vcf {output.vcf}
+		"""
 
 ########################################################
 ##################    run PanGenie    ##################
@@ -159,8 +173,8 @@ checkpoint bayestyper_cluster:
 		"data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle.tar.gz",
 		"genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.bloomData",
 		"genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.bloomMeta",
-		vcf="genotyping/{callset}/{sample}/input-panel/panel_multi_norm.vcf",
-		samples="genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.tsv"
+		vcf = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf",
+		samples = "genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.tsv"
 	output:
 		dir=directory("genotyping/{callset}/{sample}/bayestyper/{coverage}/clusters")
 	params:
@@ -187,23 +201,25 @@ rule run_bayestyper_genotype:
 		samples = "genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.tsv",
 		unit = "genotyping/{callset}/{sample}/bayestyper/{coverage}/clusters/bayestyper_unit_{unit_id}/variant_clusters.bin"
 	output:
-		genotypes=temp("genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/bayestyper.vcf"),
+		genotypes="genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/bayestyper.vcf.gz",
 	log:
 		"logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/bayestyper.log"
 	params:
 		cluster_data_dir="genotyping/{callset}/{sample}/bayestyper/{coverage}/clusters/bayestyper_cluster_data",
-		out_prefix="genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/bayestyper_zipped",
-		out_zipped_vcf="genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/bayestyper_zipped.vcf.gz"
+		out_prefix="genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/tmp",
+		out_zipped_vcf="genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/tmp.vcf.gz"
 	threads: 24
 	resources:
 		mem_mb=50000,
 		runtime_hrs=1,
 		runtime_min=59
-	run:
-		shell("/usr/bin/time -v {bayestyper} genotype -v {input.unit} -s {input.samples} -c {params.cluster_data_dir} -g {bayestyper_reference_canon} -d {bayestyper_reference_decoy} \
-		-p {threads} -z -o {params.out_prefix} > {log} 2>&1")
-		# fix the vcf ...
-		shell("gunzip -c {params.out_zipped_vcf} > {output.genotypes}")
+	shell:
+		"""
+        /usr/bin/time -v {bayestyper} genotype -v {input.unit} -s {input.samples} -c {params.cluster_data_dir} -g {bayestyper_reference_canon} -d {bayestyper_reference_decoy} -p {threads} -z -o {params.out_prefix} > {log} 2>&1
+		gunzip -c {params.out_zipped_vcf} | bgzip -c > {output.genotypes}
+        tabix -p vcf {output.genotypes}
+        rm {params.out_zipped_vcf}
+        """
 
 # combine vcfs
 def aggregate_input_vcfs(wildcards):
@@ -227,7 +243,7 @@ def aggregate_input_tbis(wildcards):
 rule bcftools_concat_units:
 	input:
 		vcfs=aggregate_input_vcfs,
-		tbis=aggregate_input_tbis
+		#tbis=aggregate_input_tbis
 	output:
 		"genotyping/{callset}/{sample}/bayestyper/{coverage}/genotyping.vcf"
 	log:
@@ -242,52 +258,50 @@ rule bcftools_concat_units:
 # Split Input panel up per chromosome 
 rule split_vcf_by_chromosome:
     input:
-        vcf=lambda wildcards: "genotyping/{callset}/input-panel/panel-{sample}-{callset}_{representation}.vcf.gz",
-        tbi=lambda wildcards: "genotyping/{callset}/input-panel/panel-{sample}-{callset}_{representation}.vcf.gz.tbi"
+        vcf = lambda wildcards: "preprocessing/{callset}/{sample}/input-panel/panel_bi.vcf.gz",
+        tbi = lambda wildcards: "preprocessing/{callset}/{sample}/input-panel/panel_bi.vcf.gz.tbi"
     output:
-        temp("genotyping/{callset}/input-panel/panel-{sample}-{callset}_{representation}_chr{chrom}.vcf")
+        "preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf"
     wildcard_constraints:
-        chrom="X|Y|[0-9]+",
-        representation="multi|bi"
+        chrom="|".join(chromosomes)
     conda:
         "../envs/genotyping.yml"
     shell:
         """
-        bcftools view {input.vcf} -r chr{wildcards.chrom} > {output}
+        bcftools view {input.vcf} -r chr{wildcards.chrom}  > {output}
         """
 
 # Input VCF for graphtyper must be biallelic
 rule graphtyper_preprocess:
 	input:
-		vcf="genotyping/{callset}/input-panel/panel-{sample}-{callset}_bi_chr{chrom}.vcf.gz",
-		tbi="genotyping/{callset}/input-panel/panel-{sample}-{callset}_bi_chr{chrom}.vcf.gz.tbi"
+		vcf="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz.tbi"
 	output:
-		vcf=temp("genotyping/{callset}/input-panel/panel-{sample}-{callset}_bi_chr{chrom}_{variant}.vcf")
+		"preprocessing/{callset}/{sample}/input-panel/panel_bi_chr{chrom}_{variant}.vcf.gz"
 	wildcard_constraints:
-		chrom="X|Y|[0-9]+",
+		chrom="|".join(chromosomes),
 		variant="snp-indel|sv"
 	conda:
 		"../envs/genotyping.yml"
 	shell:
 		"""
-		zcat {input.vcf} | python3 workflow/scripts/extract-varianttype.py {wildcards.variant} > {output}
+		bcftools view {input.vcf} | python workflow/scripts/extract-varianttype.py {wildcards.variant} | bgzip -c > {output}
+        tabix -p vcf {output}
 		"""
 
 rule graphtyper_genotype:
     input:
-        vcf = "genotyping/{callset}/input-panel/panel-{sample}-{callset}_bi_chr{chrom}_{variant}.vcf.gz",
-        tbi = "genotyping/{callset}/input-panel/panel-{sample}-{callset}_bi_chr{chrom}_{variant}.vcf.gz.tbi",
+        vcf = "preprocessing/{callset}/{sample}/input-panel/panel_bi_chr{chrom}_{variant}.vcf.gz",
         bam = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.chr{chrom}.bam",
         bai = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.chr{chrom}.bam.bai",
         fasta= lambda wildcards: config['callsets'][wildcards.callset]['reference']
     output:
-        vcf=temp("genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}/graphtyper-{sample}_genotyping.chr{chrom}.vcf")
+        vcf="genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}/genotyping.chr{chrom}.vcf.gz"
     params:
         dir="genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}"
     wildcard_constraints:
         chrom="|".join(chromosomes),
         variant="snp-indel|sv"
-        #chrom="(X|Y|[0-9]+)",
     log:
         "logs/genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}/chr{chrom}.log"
     conda:
@@ -303,11 +317,13 @@ rule graphtyper_genotype:
         ulimit -n 5000
 		if [ "{wildcards.variant}" == "sv" ]; then 
             (/usr/bin/time -v {graphtyper} genotype_sv {input.fasta} {input.vcf} --sam={input.bam} --region=chr{wildcards.chrom}  --output={params.dir} --threads={threads} --force_no_filter_zero_qual) &> {log}
-            bcftools concat -a {params.dir}/chr{wildcards.chrom}/*.vcf.gz | python3 workflow/scripts/graphtyper-postprocess.py {input.vcf} > {output.vcf}
+            bcftools concat -a {params.dir}/chr{wildcards.chrom}/*.vcf.gz | python workflow/scripts/graphtyper-postprocess.py {input.vcf} | bgzip -c > {output.vcf}
+            tabix -p vcf {output.vcf}
         else
             if [ "{wildcards.variant}" == "snp-indel" ]; then
                 (/usr/bin/time -v {graphtyper} genotype {input.fasta} --vcf={input.vcf} --sam={input.bam} --region=chr{wildcards.chrom} --no_decompose --verbose --output={params.dir} --threads={threads} --force_no_filter_zero_qual) &> {log}
-                bcftools concat -a {params.dir}/chr{wildcards.chrom}/*.vcf.gz > {output.vcf}
+                bcftools concat -a {params.dir}/chr{wildcards.chrom}/*.vcf.gz | bgzip -c > {output.vcf}
+                tabix -p vcf {output.vcf}
             fi
         fi
         """
@@ -315,7 +331,8 @@ rule graphtyper_genotype:
 		
 rule merge_vcfs_all_chromosomes_and_normalize:
     input:
-        vcfs=lambda wildcards: expand("genotyping/{{callset}}/{{sample}}/graphtyper/{{coverage}}/temp/{variant}/graphtyper-{{sample}}_genotyping.chr{chrom}.vcf.gz", chrom=ref_chromosomes[wildcards.callset], variant=["snp-indel", "sv"]),
+        #vcfs=lambda wildcards: expand("genotyping/{{callset}}/{{sample}}/graphtyper/{{coverage}}/temp/{variant}/genotyping.chr{chrom}.vcf.gz", chrom=ref_chromosomes[wildcards.callset], variant=["snp-indel", "sv"]),
+        vcfs=lambda wildcards: expand("genotyping/{{callset}}/{{sample}}/graphtyper/{{coverage}}/temp/{variant}/genotyping.chr{chrom}.vcf.gz", chrom=chromosomes, variant=["snp-indel", "sv"]),
         reference=lambda wildcards: config['callsets'][wildcards.callset]['reference']
     output: 
         "genotyping/{callset}/{sample}/graphtyper/{coverage}/genotyping.vcf"

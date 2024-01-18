@@ -3,86 +3,52 @@ include: 'rules/downsample-reads.smk'
 include: 'rules/preprocessing.smk'
 include: 'rules/genotyping.smk'
 include: 'rules/evaluation.smk'
-#include: 'rules/external.smk'
-#include: 'rules/utils.smk'
 
 coverages = ['full'] + config['downsampling']
 callsets = [c for c in config["callsets"].keys()]
 chromosomes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X"]
-versions_to_run = [v for v in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] #+ ['bayestyper', 'graphtyper']
+versions_to_run = [v for v in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] + ['bayestyper', 'graphtyper']
+
 
 samples_leave1out = [t for c in config["callsets"].keys() for t in config["callsets"][c]["leave1out"].keys()]
 samples_external = [t for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys()]
-variants_leave1out = [var for c in config["callsets"].keys() for t in config["callsets"][c]["leave1out"].keys() for var in config["callsets"][c]["leave1out"][t]["vartype"]]
+vartypes_leave1out = [var for c in config["callsets"].keys() for t in config["callsets"][c]["leave1out"].keys() for var in config["callsets"][c]["leave1out"][t]["vartype"]]
+vartypes_external = [var for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys() for var in config["callsets"][c]["external"][t]["vartype"]]
 filters_leave1out = [f for c in config["callsets"].keys() for t in config["callsets"][c]["leave1out"].keys() for f in config["callsets"][c]["leave1out"][t]["filters"]]
 filters_external = [f for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys() for f in config["callsets"][c]["external"][t]["filters"]]
 regions_leave1out = [r for c in config["callsets"].keys() for t in config["callsets"][c]["leave1out"].keys() for r in config["callsets"][c]["leave1out"][t]["regions"]]
 regions_external = [r for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys() for r in config["callsets"][c]["external"][t]["regions"]]
 
+pipelines = ['leave1out', 'external'] ## possibilities: leave1out, external
 
 rule all:
-	input:
-		expand("results/leave-one-out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
-		expand("results/leave-one-out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic'])
+    input:
+        expand("results/leave-one-out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
+        expand("results/leave-one-out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic'])
 
 
 # generate all combinations of desired output files to be produced
-def leave1out_eval_files(wildcards):
+def eval_files(wildcards):
     filenames = []
-    for c in callsets:
-        for cov in coverages:
-            for v in versions_to_run:
-                for r in regions_leave1out:
-                    for p in ['leave1out', 'external']:
-                        for t in samples_leave1out:
-                            for f in filters_leave1out:
-                                for var in variants_leave1out:
-                                    if var in ['snp', 'indels']:
+    for p in pipelines:
+        if p == 'leave1out':
+            regions, samples, filters, vartypes = regions_leave1out, samples_leave1out, filters_leave1out, vartypes_leave1out
+        if p == 'external':
+            regions, samples, filters, vartypes = regions_external, samples_external, filters_external, vartypes_external           
+        for c in callsets:
+            for cov in coverages:
+                for v in versions_to_run:
+                    for r in regions:
+                        for t in samples:
+                            for f in filters:
+                                for var in vartypes:
+                                    if var in ['snp', 'indels', 'snp-indel']:
                                         filenames.append("evaluation/" + c + "/" + t + "/" + p + "/" + v + "-" + cov + "-" + f + "-" + r + "-" + var + "/summary.txt")
-                                    if var in ['large-insertion', 'large-deletion']:
+                                    if var in ['large-insertion', 'large-deletion', 'sv']:
                                         filenames.append("evaluation/" + c + "/" + t + "/" + p + "/" + v + "-" + cov + "-" + f + "-" + r + "-" + var + "/summary.json")
                                         
     return filenames
 
-rule leave1out:
+rule evaluation:
     input:
-        leave1out_eval_files,
-        #expand("evaluation/{callset}/{sample}/{pipeline}/{version}-{coverage}-{filter}-{region}-{vartype}/summary.json", callset=['HGSVC'], sample=['NA24385'], pipeline=['leave1out'], version=['pangenie.v3'], filter=['typable'], vartype=['snp', 'indels', 'large-insertion', 'large-deletion']),
-        #expand("genotyping/{callset}/{sample}/{pipeline}/truthset/truthset-{filter}_{vartype}.vcf.gz", callset=['HGSVC'], sample=['NA24385'], pipeline=['leave1out'], filter=['typable'], vartype=['snp', 'indels', 'large-insertion', 'large-deletion']),
-        #expand("preprocessing/{callset}/{sample}/{pipeline}/untypables/untypables.tsv", callset=['HGSVC'], pipeline=['leave1out'], sample=['NA24385']),
-        #expand("preprocessing/{callset}/{sample}/{pipeline}/untypables/untypables_{vartype}.tsv", callset=['HGSVC'], pipeline=['leave1out'], sample=['NA24385'], vartype=['snp-indel', 'sv']),
-        #expand("genotyping/{callset}/{sample}/{version}/{coverage}/genotyping.vcf", callset=['HGSVC'], version=['pangenie.v3'], sample=['NA24385'], coverage=['full']),
-        ##
-        #expand("results/leave1out/{callset}/plots/resources/resources_{callset}-{coverage}.pdf", callset = [c for c in config['callsets'].keys()], coverage = coverages),
-        #expand("results/leave1out/{callset}/plots/comparison-versions/{metric}/{metric}_{coverage}_{regions}.pdf", callset = [c for c in config['callsets'].keys()], metric = ['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], coverage = coverages, regions = ['biallelic', 'multiallelic']),
-		
-
-
-
-
-
-
-# generate all combinations of desired output files to be produced
-def external_eval_files(wildcards):
-    filenames = []
-    for c in callsets:
-        for cov in coverages:
-            for v in versions_to_run:
-                for f in filters_external:
-                    for r in regions_external:
-                        for t in samples_external:
-                            filenames.append("external-eval/" + c + "/" + t + "/vcfeval_" + v + "_" + cov + "_" + f + "_region-" + r + "/summary.txt")
-                            filenames.append("external-eval/" + c + "/" + t + "/truvari_" + v + "_" + cov + "_" + f + "_region-" + r + "/summary.json")
-    return filenames
-
-
-
-
-rule external:
-    input:
-        external_eval_files,
-        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/callset-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA24385'], version=['pangenie.v3'], coverage=['full'], filter=['typable'], method=['vcfeval', 'truvari']),
-        #expand("external-eval/{callset}/{sample}/groundtruth-{filter}_{method}.vcf.gz", callset=['HGSVC'], sample=['NA24385'], filter=['typable'], method=['vcfeval', 'truvari']),
-        #expand("external-eval/{callset}/{sample}/{version}/{coverage}/genotyping-biallelic.vcf", callset=['HGSVC'], sample=['NA24385'], version=['pangenie.v3'], coverage=['full']),
-        ###
-        
+        eval_files
