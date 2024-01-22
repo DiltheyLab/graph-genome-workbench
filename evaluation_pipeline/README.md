@@ -194,11 +194,11 @@ Regarding the pipeline execution, we splitted the pipeline into two workflows to
 
 The download data workflow can be run using the following command:
 
-``  snakemake download_data --use-conda --cores 28  `` 
+``  snakemake --profile workflow/profiles download_data  `` 
 
 The leave-one-out workflow can be run using the following command:
 
-``  snakemake leave_one_out --use-conda --cores 28  ``
+``  snakemake --profile workflow/profiles leave_one_out  ``
 
 ## Acknowledgements
 

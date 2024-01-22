@@ -18,7 +18,8 @@ rule align_reads:
 		fasta = lambda wildcards: config['callsets'][wildcards.callset]['reference'],
 		fasta_ann = lambda wildcards: config['callsets'][wildcards.callset]['reference'] + ".ann"
 	output:
-		bam = "results/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam"
+		unsorted_bam = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_unsorted.bam",
+		bam = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam"
 	conda:
 		"../envs/downsampling.yml"
 	resources:
@@ -27,19 +28,21 @@ rule align_reads:
 		runtime_min = 1
 	threads: 27
 	log:
-		mem="results/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem.log"
+		bwa_mem="preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem_unsorted.log"
+		sorted_mem="preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem.log"
 	shell:
 		"""
-		(/usr/bin/time -v {bwa} mem -t {threads} -M {input.fasta} -R "@RG\\tID:{wildcards.sample}\\tLB:lib1\\tPL:illumina\\tPU:unit1\\tSM:{wildcards.sample}" {input.reads} | samtools view -bS | samtools sort -o {output.bam} - ) &> {log.mem}
+		(/usr/bin/time -v {bwa} mem -t {threads} -M {input.fasta} -R "@RG\\tID:{wildcards.sample}\\tLB:lib1\\tPL:illumina\\tPU:unit1\\tSM:{wildcards.sample}" {input.reads} | samtools view -bS ) &> {log.bwa_mem}
+		(/usr/bin/time -v samtools sort -o {output.bam} {output.unsorted_bam} - ) &> {log.sorted_mem}
 		"""
 
 ## split BAM by chromosome
 rule split_bam_by_chromosome:
 	input:
-		bam='results/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam',
-		bai='results/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam.bai'
+		bam='preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam',
+		bai='preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam.bai'
 	output:
-		bam='results/downsampling/{callset}/{coverage}/aligned/{sample}_full.chr{chrom}.bam'
+		bam='preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.chr{chrom}.bam'
 	conda:
 		'../envs/genotyping.yml'
 	shell:
@@ -50,11 +53,11 @@ rule split_bam_by_chromosome:
 ## index BAM file
 rule samtools_index:
 	input:
-		"results/downsampling/{callset}/{coverage}/aligned/{filename}.bam"
+		"preprocessing/downsampling/{callset}/{coverage}/aligned/{filename}.bam"
 	output:
-		"results/downsampling/{callset}/{coverage}/aligned/{filename}.bam.bai"
+		"preprocessing/downsampling/{callset}/{coverage}/aligned/{filename}.bam.bai"
 	log:
-		"results/downsampling/{callset}/{coverage}/aligned/{filename}-index.log"
+		"preprocessing/downsampling/{callset}/{coverage}/aligned/{filename}-index.log"
 	shell:
 		"(/usr/bin/time -v samtools index {input}) &> {log}"
 
@@ -62,10 +65,10 @@ rule samtools_index:
 # estimate the coverage of the aligned data
 rule compute_bam_coverage:
 	input:
-		full_cov_bam = "results/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam",
-		full_cov_bai = "results/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam.bai"
+		full_cov_bam = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam",
+		full_cov_bai = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.bam.bai"
 	output:
-		"results/downsampling/{callset}/{coverage}/aligned/{sample}_full.cov"
+		"preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.cov"
 	conda:
 		'../env/downsampling.yml'
 	resources:
@@ -73,7 +76,7 @@ rule compute_bam_coverage:
 		runtime_hrs = 5,
 		runtime_min = 1
 	log:
-		"results/downsampling/{callset}/{coverage}/aligned/{sample}_full_cov.log"
+		"preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_cov.log"
 	shell:
 		"bash workflow/scripts/compute-coverage.sh {input.full_cov_bam} {output} &> {log}"
 
@@ -83,7 +86,7 @@ rule downsample_reads:
 	input:
 		lambda wildcards: downsampling_reads[wildcards.sample]
 	output:
-		"results/downsampling/{callset}/{coverage}/{sample}_{coverage}.fa.gz"
+		"preprocessing/downsampling/{callset}/{coverage}/{sample}_{coverage}.fa.gz"
 	conda:
 		"../envs/downsampling.yml"
 	resources:
@@ -91,6 +94,6 @@ rule downsample_reads:
 		runtime_hrs = 5,
 		runtime_min = 1
 	log:
-		"results/downsampling/{callset}/{coverage}/{sample}_{coverage}.log"
+		"preprocessing/downsampling/{callset}/{coverage}/{sample}_{coverage}.log"
 	shell:
 		"bash workflow/scripts/downsample-fasta.sh {input.coverage} {wildcards.fraction} {input} {output} &> {log}"

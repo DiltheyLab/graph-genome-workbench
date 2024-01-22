@@ -1,6 +1,7 @@
 import sys
 import argparse
 from collections import defaultdict
+import gzip
 
 parser = argparse.ArgumentParser(prog='annotate.py', description=__doc__)
 parser.add_argument('vcf', metavar='ANNOTATIONS', help='VCF to take annotations from.')
@@ -15,29 +16,38 @@ unknown_alleles = 0
 alleles_skipped = 0
 
 # read VCF and store IDs of all alleles
-for line in open(args.vcf, 'r'):
-	if line.startswith('#'):
-		continue
-	fields = line.split()
-	chrom = fields[0]
-	pos = int(fields[1])
-	alleles = fields[4].split(',')
-	info_field = {f.split('=')[0] : f.split('=')[1] for f in fields[7].split(';') if '=' in f}
-	assert 'ID' in info_field
-	ids = info_field['ID'].split(',')
-	assert len(ids) == len(alleles)
-	for allele, id in zip(alleles, ids):
-		assert not allele in pos_to_alleles[(chrom, pos, fields[3])]
-		pos_to_alleles[(chrom, pos, fields[3])][allele] = id
-		alleles_read += 1
+#for line in open(args.vcf, 'rt'):
+for line in gzip.open(args.vcf, 'rt'):
+    if line.startswith('#'):
+        if line.startswith('##INFO=<ID=ID'):
+            id_line = line
+        continue
+    fields = line.split()
+    chrom = fields[0]
+    pos = int(fields[1])
+    alleles = fields[4].split(',')
+    info_field = {f.split('=')[0] : f.split('=')[1] for f in fields[7].split(';') if '=' in f}
+    assert 'ID' in info_field
+    ids = info_field['ID'].split(',')
+    assert len(ids) == len(alleles)
+    for allele, id in zip(alleles, ids):
+        assert not allele in pos_to_alleles[(chrom, pos, fields[3])]
+        pos_to_alleles[(chrom, pos, fields[3])][allele] = id
+        alleles_read += 1
 sys.stderr.write('Read ' + str(alleles_read) + ' alleles/ids from ' + args.vcf + '.\n')
 
 
 # read other VCF and add IDs to matching alleles
 index = 0
 for line in sys.stdin:
+    if line.startswith('##'):
+        there_is_not_id_line = False if line.startswith('##INFO=<ID=ID') else True            
+        print(line[:-1]) 
+        continue
     if line.startswith('#'):
-        print(line[:-1])
+        if there_is_not_id_line:
+            print(id_line[:-1]) ## inserting ID INFO tag in the header
+        print(line[:-1]) 
         continue
     fields = line.strip().split()
     chrom = fields[0]

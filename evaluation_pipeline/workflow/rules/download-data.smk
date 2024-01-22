@@ -1,13 +1,14 @@
 # stores paths to reads
-reads_leave_one_out = {}
+read_paths = {}
 
 for line in open(config['reads'], 'r'):
 	if line.startswith('#'):
 		continue
 	fields = line.strip().split()
-	sample_id = fields[2]
+	sample_id = fields[1]
 	read_path = fields[7]
-	reads_leave_one_out[sample_id] = read_path
+	read_paths[sample_id] = read_path
+
 
 rule download_data:
     input:
@@ -25,10 +26,16 @@ rule download_data:
         'data/downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf.gz',
          
         # reads
-        expand("{sample_paths}", sample_paths=list(reads_leave_one_out.values())),
+        expand("{sample_paths}", sample_paths=list(read_paths.values())),
 
         ## Download GRCh38 bundle for BayesTyper
-        "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle.tar.gz"
+        "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle.tar.gz",
+
+        ## Download HG002/NA24385 benchmark external validation dataset
+        "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+        "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
+        "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed"
+
 
         
 
@@ -183,7 +190,7 @@ rule bwa_index_fasta:
 	output:
 		"data/downloaded/fasta/{filename}.fa" + ".ann"
 	log:
-		"data/downloaded/fasta/{filename}-indexing.log"
+		"logs/data/downloaded/fasta/{filename}-indexing.log"
 	resources:
 		mem_total_mb=5000
 	shell:
@@ -194,13 +201,38 @@ rule bwa_index_fasta:
 #######################   Download utils     #######################
 ####################################################################
 
+### Following data is downloaded from Google Drive, since the original link doesn't work anymore. 
+### --> See issue: https://github.com/bioinformatics-centre/BayesTyper/issues/48
+
 rule download_BayesTyper_GRCh38_bundle:
     output:
         compressed_bundle="data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle.tar.gz", 
         uncompressed_bundle=directory("data/downloaded/bayestyper_utils")
+    params:
+        file_id = "1ioTjLFkfmvOMsXubJS5_rwpfajPv5G1Q"
     shell:
         """
-        wget -O {output.compressed_bundle} http://people.binf.ku.dk/~lassemaretty/bayesTyper/bayestyper_GRCh38_bundle.tar.gz 
+        wget --load-cookies /tmp/cookies.txt \
+        "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate \
+        'https://drive.google.com/uc?export=download&id={params.file_id}' -O- | \
+        sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\\1\\n/p')&id={params.file_id}" \
+        -O {output.compressed_bundle} && rm -rf /tmp/cookies.txt
+        
         tar -xvf {output.compressed_bundle} -C {output.uncompressed_bundle} 
         """
 
+
+####################################################################
+#####   Download benchmark external validation dataset     #########
+####################################################################
+
+# download GIAB benchmark VCF file for HG002_NA24385
+rule download_GIAB_bechmark_HG002:
+	output:
+		vcf="data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+		tbi="data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
+		bed="data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed"
+	run:
+		shell("wget -O {output.vcf} https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/latest/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz")
+		shell("wget -O {output.tbi} https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/latest/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi")
+		shell("wget -O {output.bed} https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/latest/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed")

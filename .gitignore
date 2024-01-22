@@ -4,6 +4,7 @@
 **/dev_test
 **/evaluation_old
 **/testing
+**/results
 **/data/callset/
 **/data/callset-and-graph/
 **/data/downloaded/
@@ -14,6 +15,13 @@
 **/data/prepared-datasets/
 **/ubuntu-docker_testing
 **/playbook_denbi
-**/playbook_denbi_working
-denbi_gg/roles/github-ssh/
-denbi_gg/roles/mamba-snakemake/
+**/external-eval
+**/external-eval_old
+**/external-eval_dev
+**/external-eval_*
+**/reduced-data
+**/__pycache__
+**/results_old
+**/logs
+**/preprocessing
+**/genotyping

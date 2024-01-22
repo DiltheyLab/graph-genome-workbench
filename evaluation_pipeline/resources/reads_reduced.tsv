@@ -1,0 +1,3 @@
+#FamilyID	SampleID	FatherID	MotherID	Sex	Population	Superpopulation	SampleIllumina
+NA24385	NA24385	0	0	1	UNKNOWN	UNKNOWN	reduced-data/NA24385_raw.fastq.gz
+1463B	NA12878	NA12891	NA12892	2	CEU	EUR	reduced-data/NA12878_raw.fastq.gz
