@@ -1,0 +1,27 @@
+---
+home_path: /home/ubuntu
+miniconda_version: py310_23.3.1-0
+miniforge_version: 23.11.0-0
+wfmash_version: v0.10.3
+seqwish_version: v0.7.9
+smoothxg_version: v0.7.0
+gfaffix_version: 0.1.4b
+pggb_version: 0.5.3
+cactus_version: v2.5.2
+igv_version: 2.16.1
+snpeff_version: v4_3t
+pangenie_version: 3.0.0
+minimap2_version: 2.26
+miniasm_version: 0.3
+minigraph_version: 0.20
+vg_version: v1.48.0
+graphtyper2_version: v2.7.5
+odgi_version: v0.8.3
+novograph_version: 1.0.0
+htslib_version: 1.17
+rtgtools_version: 3.12.1
+truvari_version: 4.1.0
+gdown_version: 5.0.0
+bayestyper_version: v1.5
+paragraph_version: v2.4a
+snakemake_version: 8.2.0

@@ -1,0 +1,3 @@
+---
+- name: reload bash # for changes to take effect after the conda init bash in order to reload the current shell 
+  ansible.builtin.command: "bash -ic 'source {{ home_path }}/.bashrc'"

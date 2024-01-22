@@ -1,0 +1,85 @@
+---
+- name: Testing
+  hosts: localhost
+  
+  # roles:
+  #   - Pangenotyping
+
+  tasks:    
+    - name: Get variable version
+      include_vars:
+        file: vars.yml
+        name: myvars    
+    - name: Check Mamba installation
+      command: "mamba --help"
+      register: mamba_help
+      failed_when: mamba_help.stderr != ''
+    - name: Check Conda installation
+      command: "conda --help"
+      register: conda_help
+      failed_when: conda_help.stderr != ''
+    - name: Check Snakemake installation
+      command: "snakemake --help"
+      register: snakemake_help
+      failed_when: snakemake_help.stderr != ''
+    - name: Check PanGenie 1/2 installation
+      command: "PanGenie_v{{ myvars.pangenie_version }} --help"
+      register: pangenie1_help
+      failed_when: pangenie1_help.stdout != ''
+    - name: Check PanGenie 2/2 installation
+      command: "PanGenie_v{{ myvars.pangenie_version }}-index --help"
+      register: pangenie2_help
+      failed_when: pangenie2_help.stdout != ''
+    - name: Check Truvari installation
+      command: "truvari --help"
+      register: truvari_help
+      failed_when: truvari_help.stdout != ''
+    - name: Check BayesTyper installation
+      command: "bayesTyper --help"
+      register: bayestyper_help
+      failed_when: bayestyper_help.stderr != ''
+    - name: Check BayesTyperTools installation
+      command: "bayesTyperTools --help"
+      register: bayestypertools_help
+      failed_when: bayestypertools_help.stderr != ''
+    - name: Check Paragraph installation
+      command: "paragraph --help"
+      register: paragraph_help
+      failed_when: paragraph_help.stderr != 'no --response-file'
+    - name: Check RTG Tools installation
+      command: "{{ myvars.home_path }}/rtg-tools-{{ myvars.rtgtools_help }}/rtg --help"
+      register: rtgtools_help
+      failed_when: rtgtools_help.stderr != ''
+    - name: Check Minimap2 installation
+      command: "minimap2 --help"
+      register: minimap2_help
+      failed_when: minimap2_help.stderr != ''
+    - name: Check GraphTyper installation
+      command: "graphtyper --help"
+      register: graphtyper_help
+      failed_when: graphtyper_help.stderr != ''
+    - name: Check Gdown installation
+      command: "gdown --help"
+      register: gdown_help
+      failed_when: gdown_help.stderr != ''
+    - name: Check BWA installation
+      command: "bwa"
+      register: bwa_help
+      failed_when: bwa_help.stdout != ''
+    - name: Check bcftools installation
+      command: "bcftools --help"
+      register: bcftools_help
+      failed_when: bcftools_help.stderr != ''
+    - name: Check samtools installation
+      command: "samtools --help"
+      register: samtools_help
+      failed_when: samtools_help.stderr != ''
+    - name: Check bedtools installation
+      command: "bedtools --help"
+      register: bedtools_help
+      failed_when: bedtools_help.stderr != ''
+    - name: Check kmc installation
+      command: "kmc --help"
+      register: kmc_help
+      failed_when: kmc_help.stderr != ''
+
