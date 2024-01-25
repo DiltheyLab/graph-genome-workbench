@@ -9,8 +9,9 @@ callsets:
         # reference genome in FASTA format
         reference: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa"
         reference_fai: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai"
+        repeat_regions: "resources/ucsc-simple-repeats.bed"
         leave1out: # specify the samples to evaluate on
-            NA24385:
+            NA12878:
                 regions: # options: all, multi, bi
                     - all
                     - multi
@@ -23,7 +24,7 @@ callsets:
                     - large-deletion
                     - large-insertion
         external: # specify the samples to (externally) evaluate on
-            NA24385: 
+            NA12878: 
                 path: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" # benchmark dataset used a truth for external evaluation 
                 callable_regions: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed" # path to BED with callable regions
                 vartype: # options: snp-indel, sv
@@ -56,15 +57,20 @@ downsampling: []
 # Other programs
 programs:
     rtg: "/home/ubuntu/rtg-tools-3.12.1/rtg"
-    bwa: "/usr/bin/bwa"
-    bayestyper: "/usr/local/bin/bayesTyper"
-    bayestyper_tools: "/usr/local/bin/bayesTyperTools"
-    graphtyper: "/usr/local/bin/graphtyper"
-    kmc: "/usr/bin/kmc"
-    truvari: "/usr/local/bin/truvari"
+    bwa: "bwa"
+    samtools: "samtools"
+    bcftools: "bcftools"
+    bedtools: "bedtools"
+    bayestyper: "bayesTyper"
+    bayestyper_tools: "bayesTyperTools"
+    graphtyper: "graphtyper"
+    kmc: "kmc"
+    truvari: "truvari"
+    gdown: "gdown"
 
 
 # Other parameters
 utils:
     bayestyper_reference_canon: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_canon.fa"
     bayestyper_reference_decoy: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_decoy.fa"
+    tmp_workdir_computations: /vol/whopper

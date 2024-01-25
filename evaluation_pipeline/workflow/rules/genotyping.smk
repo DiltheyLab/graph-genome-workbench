@@ -27,22 +27,6 @@ for line in open(config['reads'], 'r'):
 
 
 ########################################################
-##################    Util functions    ################
-########################################################
-rule compress_vcf:
-	input:
-		"preprocessing/{filename}.vcf"
-	output:
-		vcf = "preprocessing/{filename}.vcf.gz",
-		tbi = "preprocessing/{filename}.vcf.gz.tbi"
-	priority: 1
-	shell:
-		"""
-		bgzip -c {input} > {output.vcf}
-		tabix -p vcf {output.vcf}
-		"""
-
-########################################################
 ##################    run PanGenie    ##################
 ########################################################
 
@@ -261,14 +245,15 @@ rule split_vcf_by_chromosome:
         vcf = lambda wildcards: "preprocessing/{callset}/{sample}/input-panel/panel_bi.vcf.gz",
         tbi = lambda wildcards: "preprocessing/{callset}/{sample}/input-panel/panel_bi.vcf.gz.tbi"
     output:
-        "preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf"
+        "preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz"
     wildcard_constraints:
         chrom="|".join(chromosomes)
     conda:
         "../envs/genotyping.yml"
     shell:
         """
-        bcftools view {input.vcf} -r chr{wildcards.chrom}  > {output}
+        bcftools view {input.vcf} -r chr{wildcards.chrom} | bgzip -c  > {output}
+        tabix -p vcf {output}
         """
 
 # Input VCF for graphtyper must be biallelic

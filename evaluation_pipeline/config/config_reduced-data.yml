@@ -62,9 +62,11 @@ programs:
     graphtyper: "/usr/local/bin/graphtyper"
     kmc: "/usr/bin/kmc"
     truvari: "/usr/local/bin/truvari"
+    gdown: "/home/ubuntu/miniconda3/bin/gdown"
 
 
 # Other parameters
 utils:
     bayestyper_reference_canon: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_canon.fa"
     bayestyper_reference_decoy: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_decoy.fa"
+    tmp_workdir_computations: /vol/whopper

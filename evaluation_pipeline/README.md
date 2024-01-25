@@ -194,11 +194,23 @@ Regarding the pipeline execution, we splitted the pipeline into two workflows to
 
 The download data workflow can be run using the following command:
 
-``  snakemake --profile workflow/profiles download_data  `` 
+``  snakemake --profile workflow/profile-default/ -s workflow/rules/download-data.smk download_data  `` 
 
-The leave-one-out workflow can be run using the following command:
+The evaluation pipeline can be run using the following command:
+Apriori modifications: 
+- Adapt tmp_workdir_computations to a large size-volume directory (at least X Gb free)
 
-``  snakemake --profile workflow/profiles leave_one_out  ``
+``  snakemake --profile workflow/profile-default/ evaluation  ``
+
+Alternatively, it can also be run in a reduced version (as a sanity-check):
+Apriori modifications: 
+- Set the chromosomes values to the chrom variable in reduced-data.sh.
+
+```
+./workflow/scripts/reduced-data.sh  
+snakemake --profile workflow/profile-reduced-data/ evaluation
+```
+
 
 ## Acknowledgements
 

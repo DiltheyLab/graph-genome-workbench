@@ -1,4 +1,5 @@
 kmc=config['programs']['kmc']
+bcftools=config['programs']['bcftools']
 bayestyper=config['programs']['bayestyper']
 bayestyper_tools=config['programs']['bayestyper_tools']
 graphtyper=config['programs']['graphtyper']
@@ -51,7 +52,7 @@ rule postprocessing_callset:
 		untypables = lambda wildcards: f" python workflow/scripts/skip-untypable.py preprocessing/{wildcards.callset}/{wildcards.sample}/{wildcards.pipeline}/untypables/untypables.tsv |" if wildcards.filter == 'typable' else ""
 	shell:
 		"""
-		bcftools view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
+		{bcftools} view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
 		tabix -p vcf {output.vcf}
 		"""
 
@@ -73,7 +74,7 @@ rule postprocessing_truthset:
 		untypables = lambda wildcards: f" python workflow/scripts/skip-untypable.py preprocessing/{wildcards.callset}/{wildcards.sample}/{wildcards.pipeline}/untypables/untypables.tsv |" if wildcards.filter == 'typable' else ""
 	shell:
 		"""
-		bcftools view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
+		{bcftools} view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
 		tabix -p vcf {output.vcf}
 		"""
 
@@ -117,7 +118,7 @@ rule evaluate_with_vcfeval:
 	threads: 24
 	shell:
 		"""
-		bcftools view {input.callset} --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.fixed_vcf}
+		{bcftools} view {input.callset} --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.fixed_vcf}
 		tabix -p vcf {output.fixed_vcf}
 		(/usr/bin/time -v {rtg} vcfeval -b {input.baseline} -c {output.fixed_vcf} -t {input.sdf} -o {params.tmp} {params.bed} --ref-overlap --all-records --Xmax-length 30000 --threads {threads} > {output.summary}.tmp) &> {log}
 		mv {params.tmp}/* {params.outname}/
@@ -155,7 +156,7 @@ rule evaluate_with_truvari:
 	threads: 1
 	shell:
 		"""
-		bcftools view {input.callset} --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.fixed_vcf}
+		{bcftools} view {input.callset} --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.fixed_vcf}
 		tabix -p vcf {output.fixed_vcf}
 		(/usr/bin/time -v {truvari} bench -b {input.baseline} -c {output.fixed_vcf} -f {input.reference} -o {params.tmp} --pick multi {params.bed} -r 2000 --no-ref a -C 2000 --passonly > {output.summary}.tmp) &> {log}
 		mv {params.tmp}/* {params.outname}/

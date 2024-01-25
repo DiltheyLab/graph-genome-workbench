@@ -40,7 +40,6 @@ rule remove_missing:
 		"../envs/genotyping.yml"
 	resources:
 		mem_total_mb=20000
-	priority: 1
 	wildcard_constraints:
 		representation = "bi|multi"
 	shell:
@@ -54,11 +53,10 @@ rule prepare_panel:
 		"preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf"
 	conda:
 		"../envs/genotyping.yml"
-	priority: 1
 	wildcard_constraints:
 		representation = "bi|multi"
 	params: 
-		lambda wildcards: "| python3 workflow/scripts/annotate-ids.py" if wildcards.representation == 'bi' else ""
+		lambda wildcards: "| python workflow/scripts/annotate-ids.py" if wildcards.representation == 'bi' else ""
 	log:
 		"logs/preprocessing/{callset}/{sample}/input-panel/panel_{representation}.log"
 	resources:
@@ -167,7 +165,7 @@ rule determine_false_negatives:
 	params:
 		tmp="preprocessing/{callset}/{sample}/{pipeline}/untypables/samples/{panelsample}/{vartype}_temp",
 		outname="preprocessing/{callset}/{sample}/{pipeline}/untypables/samples/{panelsample}/{vartype}"
-	threads: 1
+	threads: 24
 	resources:
 		mem_total_mb=50000,
 		runtime_hrs=0,
@@ -179,7 +177,7 @@ rule determine_false_negatives:
 		bcftools view --samples {wildcards.panelsample} {input.panel} | bcftools view --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.sample_vcf}
 		tabix -p vcf {output.sample_vcf}
 		if [ "{wildcards.vartype}" == "snp-indel" ]; then 
-			(/usr/bin/time -v {rtg} vcfeval -b {input.truthset} -c {output.sample_vcf} -t {input.sdf} -o {params.tmp} --squash-ploidy ) &> {log}
+			(/usr/bin/time -v {rtg} vcfeval -b {input.truthset} -c {output.sample_vcf} -t {input.sdf} -o {params.tmp} --squash-ploidy --threads {threads} ) &> {log}
 		elif [ "{wildcards.vartype}" == "sv" ]; then
 			( /usr/bin/time -v {truvari} bench -b {input.truthset} -c {output.sample_vcf} -f {input.reference} -o {params.tmp} --pick multi -r 2000 --no-ref a -C 2000 --passonly) &> {log}
 		fi
@@ -263,5 +261,5 @@ rule prepare_beds:
 	shell:
 		"""
 		sort -k1,1d -k 2,2n -k 3,3n {input.fai} > {output.tmp}
-		bedtools complement -i {input.bed} -g {output.tmp} > {output.bed}
+		{bedtools} complement -i {input.bed} -g {output.tmp} > {output.bed}
 		"""

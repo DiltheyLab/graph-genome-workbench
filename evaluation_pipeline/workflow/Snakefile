@@ -7,7 +7,9 @@ include: 'rules/evaluation.smk'
 coverages = ['full'] + config['downsampling']
 callsets = [c for c in config["callsets"].keys()]
 chromosomes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X"]
-versions_to_run = [v for v in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] + ['bayestyper', 'graphtyper']
+#chromosomes = ["17"]
+#versions_to_run = [v for v in config['pangenie'].keys()] + [v for v in config['pangenie-modules'].keys()] + ['bayestyper', 'graphtyper']
+versions_to_run = ['graphtyper']
 
 
 samples_leave1out = [t for c in config["callsets"].keys() for t in config["callsets"][c]["leave1out"].keys()]
