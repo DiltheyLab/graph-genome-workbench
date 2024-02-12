@@ -1,0 +1,23 @@
+galaxy_info:
+  author: Alberto Descalzo
+  description: "Installation of (bioinformatics) pangenomics-genotyping software in VMs within deNBI Cloud to run genotyping pipelines of state-of-the-art graph-genome-based approaches."
+
+  license: MIT
+
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - "focal"
+        - "jammy"
+
+  galaxy_tags:
+    - bioinformatics
+    - pangenomics
+    - deNBI
+
+environment:
+    - Cloud
+
+dependencies: []

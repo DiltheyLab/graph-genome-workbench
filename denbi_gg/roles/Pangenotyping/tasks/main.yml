@@ -1,0 +1,231 @@
+---
+- name: Download mamba.
+  get_url:
+    url: 'https://github.com/conda-forge/miniforge/releases/download/{{ miniforge_version }}/Mambaforge-{{ miniforge_version }}-Linux-x86_64.sh'
+    dest: /tmp/mamba.sh
+    mode: 0744
+- name: Install mamba.
+  command: > 
+    /tmp/mamba.sh -b -f -p /home/ubuntu/miniforge3 
+  args:
+    creates: "{{ home_path }}/miniforge3/bin/mamba"
+- name: Add Mamba to PATH environment variable.
+  lineinfile:
+    path: /home/ubuntu/.bashrc
+    line: 'export PATH=/home/ubuntu/miniforge3/bin:$PATH'
+    create: yes
+    state: present  
+- name: Add Conda to PATH environment variable.
+  lineinfile:
+    path: /home/ubuntu/.bashrc
+    line: 'export PATH=/home/ubuntu/miniforge3/bin:$PATH'
+    create: yes
+    state: present  
+- name: Install apt packages.
+  become: true
+  ansible.builtin.apt:
+    update_cache: yes
+    pkg: 
+      - build-essential
+      - cmake
+      - libgsl-dev
+      - libhts-dev
+      - libjemalloc-dev
+      - libz-dev
+      - libzstd-dev
+      - python3-distutils 
+      - python3-dev
+      - pkg-config
+      - unzip
+      - bedtools
+      - samtools
+      - bcftools
+      - vcftools
+      - kmc
+      - bwa
+- name: Install snakemake with mamba.
+  command: '{{ home_path }}/miniforge3/bin/mamba create -c conda-forge -c bioconda -n snakemake snakemake={{ snakemake_version}}'
+  args:
+    creates: '{{ home_path }}/miniforge3/envs/snakemake/bin/snakemake'
+- name: Copy snakemake to path.
+  become: true
+  ansible.builtin.copy:
+    src: '{{ home_path }}/miniforge3/envs/snakemake/bin/snakemake'
+    dest: /usr/local/bin/snakemake 
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Download pangenie.
+  ansible.builtin.get_url:
+    url: 'https://github.com/eblerjana/pangenie/archive/refs/tags/v{{ pangenie_version }}.tar.gz'
+    dest: /tmp/pangenie_{{ pangenie_version }}.tar.gz
+    owner: ubuntu
+    mode: 0755
+- name: Unzip pangenie.
+  ansible.builtin.unarchive:
+    src: /tmp/pangenie_{{ pangenie_version }}.tar.gz
+    dest: '{{ home_path }}/'
+    remote_src: true
+- name: Install pangenie.
+  command: '{{ home_path }}/miniforge3/bin/mamba env create -f environment.yml'
+  args:
+    chdir: '{{ home_path }}/pangenie-{{ pangenie_version }}'
+    creates: '{{ home_path }}/miniforge3/envs/pangenie/bin/cpp'
+- name: Create build directory.
+  ansible.builtin.file:
+    path: '{{ home_path }}/pangenie-{{ pangenie_version }}/build'
+    state: directory
+    mode: '0755'
+- shell: 'source {{ home_path }}/miniforge3/etc/profile.d/conda.sh && conda activate pangenie && cmake .. && make'
+  args:
+    executable: /bin/bash
+    chdir: '{{ home_path }}/pangenie-{{ pangenie_version }}/build'
+    creates: '{{ home_path }}/pangenie{{ pangenie_version }}/build/src/PanGenie'
+- name: Copy pangenie to path 1/2.
+  become: true
+  ansible.builtin.copy:
+    src: '{{ home_path }}/pangenie-{{ pangenie_version }}/build/src/PanGenie'
+    dest: /usr/local/bin/PanGenie_v{{ pangenie_version }}
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Copy pangenie to path 2/2.
+  become: true
+  ansible.builtin.copy:
+    src: '{{ home_path }}/pangenie-{{ pangenie_version }}/build/src/PanGenie-index'
+    dest: /usr/local/bin/PanGenie_v{{ pangenie_version }}-index
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Install truvari using pip
+  pip:
+    name: 'truvari=={{ truvari_version }}'
+    executable: '{{ home_path }}/miniforge3/bin/pip3'
+    state: present
+- name: Copy truvari to path.
+  become: true
+  ansible.builtin.copy:
+    src: '{{ home_path }}/miniforge3/bin/truvari'
+    dest: /usr/local/bin/truvari
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Download bayesTyper
+  become: true
+  get_url:
+    url: 'https://github.com/bioinformatics-centre/BayesTyper/releases/download/{{ bayestyper_version }}/bayesTyper_{{ bayestyper_version }}_linux_x86_64.tar.gz'
+    dest: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64.tar.gz'
+    owner: ubuntu
+    mode: 0755
+- name: Unzip bayesTyper.
+  ansible.builtin.unarchive:
+    src: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64.tar.gz'
+    dest: /tmp/
+    remote_src: true
+- name: Copy bayesTyper to path
+  become: true
+  ansible.builtin.copy:
+    src: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64/bin/bayesTyper'
+    dest: /usr/local/bin/bayesTyper
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Copy bayesTyperTools to path
+  become: true
+  ansible.builtin.copy:
+    src: '/tmp/bayesTyper_{{ bayestyper_version }}_linux_x86_64/bin/bayesTyperTools'
+    dest: /usr/local/bin/bayesTyperTools
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Download Paragraph
+  become: true
+  get_url:
+    url: 'https://github.com/Illumina/paragraph/releases/download/{{ paragraph_version }}/paragraph-{{ paragraph_version }}-binary.zip'
+    dest: '/tmp/paragraph.zip'
+    owner: ubuntu
+    mode: 0755
+- name: Create paragraph directory
+  ansible.builtin.file:
+    path: '/tmp/paragraph/'
+    state: directory
+- name: Unzip paragraph.
+  ansible.builtin.unarchive:
+    src: /tmp/paragraph.zip
+    dest: '/tmp/paragraph/'
+    remote_src: true
+- name: Copy paragraph to path
+  become: true
+  ansible.builtin.copy:
+    src: '/tmp/paragraph/bin/paragraph'
+    dest: /usr/local/bin/paragraph
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Download RTG Tools
+  ansible.builtin.get_url:
+    url: 'https://github.com/RealTimeGenomics/rtg-tools/releases/download/{{ rtgtools_version }}/rtg-tools-{{ rtgtools_version }}-linux-x64.zip'
+    dest: /tmp/rtgtools.zip
+    owner: ubuntu
+    mode: 0755
+- name: Unzip RTG Tools.
+  ansible.builtin.unarchive:
+    src: /tmp/rtgtools.zip
+    dest: '{{ home_path }}'
+    remote_src: true
+- name: Download minimap2.
+  ansible.builtin.get_url:
+    url: 'https://github.com/lh3/minimap2/releases/download/v{{ minimap2_version }}/minimap2-{{ minimap2_version }}_x64-linux.tar.bz2'
+    dest: /tmp/minimap2.tar.bz2
+    owner: ubuntu
+    mode: 0755
+- name: Unzip minimap2.
+  ansible.builtin.unarchive:
+    src: /tmp/minimap2.tar.bz2
+    dest: /tmp/
+    remote_src: true
+- name: Copy minimap2 to path.
+  become: true
+  ansible.builtin.copy:
+    src: '/tmp/minimap2-{{ minimap2_version }}_x64-linux/minimap2'
+    dest: /usr/local/bin/minimap2
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Download graphtyper.
+  become: true
+  get_url:
+    url: 'https://github.com/DecodeGenetics/graphtyper/releases/download/{{ graphtyper2_version }}/graphtyper'
+    dest: /usr/local/bin/graphtyper
+    owner: ubuntu
+    mode: 0755
+- name: Install gdown using pip
+  pip:
+    name: 'gdown=={{ gdown_version }}'
+    executable: '{{ home_path }}/miniforge3/bin/pip3'
+    state: present
+- name: Copy gdown to path.
+  become: true
+  ansible.builtin.copy:
+    src: '{{ home_path }}/miniforge3/bin/gdown'
+    dest: /usr/local/bin/gdown
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+- name: Add conda init bash to .bashrc
+  ansible.builtin.lineinfile:
+    path: '{{ home_path }}/.bashrc'
+    line: "conda init bash"
+    state: present
+    create: yes
+  notify:
+    - reload bash
