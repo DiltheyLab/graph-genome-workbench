@@ -146,6 +146,7 @@ rule rtg_format:
 ########################################################
 
 ######## Compute Untypables ########
+####### split this rule into two different depending on vartype, as truvari is using just 1 core but still is getting 24, which slows down its computational speed
 ####  Find out which variants in the truth set are not contained in the pangenome graph (=untypables, because our methods are re-genotypers, i.e. no new variants detected)
 #### Assign each variant a unique ID (if a variant matches with panel, use the same ID as panel).
 rule determine_false_negatives:
