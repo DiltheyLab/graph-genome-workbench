@@ -63,6 +63,9 @@ programs:
     kmc: "/usr/bin/kmc"
     truvari: "/usr/local/bin/truvari"
     gdown: "/home/ubuntu/miniconda3/bin/gdown"
+    samtools: "/usr/bin/samtools"
+    bcftools: "/usr/bin/bcftools"
+    bedtools: "/usr/bin/bedtools"
 
 
 # Other parameters

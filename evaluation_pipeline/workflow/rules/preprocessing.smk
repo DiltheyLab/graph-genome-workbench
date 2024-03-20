@@ -50,7 +50,9 @@ rule prepare_panel:
 	input:
 		"preprocessing/{callset}/{sample}/input-panel/panel_{representation}_no-missing.vcf"
 	output:
-		"preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf"
+		vcf="preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf",
+		vcf_comp="preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf.gz.tbi"
 	conda:
 		"../envs/genotyping.yml"
 	wildcard_constraints:
@@ -63,7 +65,9 @@ rule prepare_panel:
 		mem_total_mb=20000
 	shell:
 		"""
-		(/usr/bin/time -v bcftools view --samples ^{wildcards.sample} {input} | bcftools view --min-ac 1 {params} > {output} ) &> {log}
+		(/usr/bin/time -v bcftools view --samples ^{wildcards.sample} {input} | bcftools view --min-ac 1 {params} > {output.vcf} ) &> {log}
+		bgzip -c {output.vcf} > {output.vcf_comp}
+		tabix -p vcf {output.vcf_comp}
 		"""
 
 rule normalize_input_panel:
@@ -72,9 +76,13 @@ rule normalize_input_panel:
 		reference = lambda wildcards: config['callsets'][wildcards.callset]['reference']
 	output:
 		vcf = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf",
+		vcf_comp = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf.gz",
+		tbi = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf.gz.tbi"
 	shell:
 		"""
 		bcftools norm -m +any -d all -f {input.reference} {input.vcf} | bcftools sort > {output.vcf}
+		bgzip -c {output.vcf} > {output.vcf_comp}
+		tabix -p vcf {output.vcf_comp}
 		"""
 
 rule prepare_truth_leave1out_to_biallelic:
@@ -83,15 +91,16 @@ rule prepare_truth_leave1out_to_biallelic:
 		panel = lambda wildcards: config['callsets'][wildcards.callset]['bi'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']
 	output:
-		"preprocessing/{callset}/{sample}/leave1out/truthset/truthset-biallelic.vcf.gz",
+		vcf="preprocessing/{callset}/{sample}/leave1out/truthset/truthset-biallelic.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/leave1out/truthset/truthset-biallelic.vcf.gz.tbi"
 	conda:
 		"../envs/genotyping.yml"
 	resources:
 		mem_total_mb=20000
 	shell:
 		"""
-        bcftools view --samples {wildcards.sample} {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output}
-        tabix -p vcf {output}
+        bcftools view --samples {wildcards.sample} {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output.vcf}
+        tabix -p vcf {output.vcf}
         """
 
 rule prepare_truth_external_to_biallelic:
@@ -100,18 +109,20 @@ rule prepare_truth_external_to_biallelic:
 		panel = lambda wildcards: config['callsets'][wildcards.callset]['bi'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']
 	output:
-		"preprocessing/{callset}/{sample}/external/truthset/truthset-biallelic.vcf.gz"
+		vcf="preprocessing/{callset}/{sample}/external/truthset/truthset-biallelic.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/external/truthset/truthset-biallelic.vcf.gz.tbi"
 	shell:
 		"""
-		bcftools norm -m -any {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output}
-		tabix -p vcf {output}
+		bcftools norm -m -any {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output.vcf}
+		tabix -p vcf {output.vcf}
 		"""
 
 rule split_truthset_by_variants:
 	input:
 		"preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset-biallelic.vcf.gz",
 	output:
-		"preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic.vcf.gz",
+		vcf="preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic.vcf.gz.tbi"
 	conda:
 		"../envs/genotyping.yml"
 	wildcard_constraints:
@@ -120,8 +131,8 @@ rule split_truthset_by_variants:
 		mem_total_mb=20000
 	shell:
 		"""
-        bcftools view {input} | python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output}
-        tabix -p vcf {output}
+        bcftools view {input} | python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
+        tabix -p vcf {output.vcf}
         """
 
 

@@ -245,15 +245,16 @@ rule split_vcf_by_chromosome:
         vcf = lambda wildcards: "preprocessing/{callset}/{sample}/input-panel/panel_bi.vcf.gz",
         tbi = lambda wildcards: "preprocessing/{callset}/{sample}/input-panel/panel_bi.vcf.gz.tbi"
     output:
-        "preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz"
+        vcf="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz",
+        tbi="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz.tbi"
     wildcard_constraints:
         chrom="|".join(chromosomes)
     conda:
         "../envs/genotyping.yml"
     shell:
         """
-        bcftools view {input.vcf} -r chr{wildcards.chrom} | bgzip -c  > {output}
-        tabix -p vcf {output}
+        bcftools view {input.vcf} -r chr{wildcards.chrom} | bgzip -c  > {output.vcf}
+        tabix -p vcf {output.vcf}
         """
 
 # Input VCF for graphtyper must be biallelic
@@ -262,7 +263,8 @@ rule graphtyper_preprocess:
 		vcf="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz",
 		tbi="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz.tbi"
 	output:
-		"preprocessing/{callset}/{sample}/input-panel/panel_bi_chr{chrom}_{variant}.vcf.gz"
+		vcf="preprocessing/{callset}/{sample}/input-panel/panel_bi_chr{chrom}_{variant}.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/input-panel/panel_bi_chr{chrom}_{variant}.vcf.gz.tbi"
 	wildcard_constraints:
 		chrom="|".join(chromosomes),
 		variant="snp-indel|sv"
@@ -270,8 +272,8 @@ rule graphtyper_preprocess:
 		"../envs/genotyping.yml"
 	shell:
 		"""
-		bcftools view {input.vcf} | python workflow/scripts/extract-varianttype.py {wildcards.variant} | bgzip -c > {output}
-        tabix -p vcf {output}
+		bcftools view {input.vcf} | python workflow/scripts/extract-varianttype.py {wildcards.variant} | bgzip -c > {output.vcf}
+        tabix -p vcf {output.vcf}
 		"""
 
 rule graphtyper_genotype:
@@ -281,7 +283,8 @@ rule graphtyper_genotype:
         bai = "preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full.chr{chrom}.bam.bai",
         fasta= lambda wildcards: config['callsets'][wildcards.callset]['reference']
     output:
-        vcf="genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}/genotyping.chr{chrom}.vcf.gz"
+        vcf="genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}/genotyping.chr{chrom}.vcf.gz",
+        tbi="genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}/genotyping.chr{chrom}.vcf.gz.tbi"
     params:
         dir="genotyping/{callset}/{sample}/graphtyper/{coverage}/temp/{variant}"
     wildcard_constraints:
