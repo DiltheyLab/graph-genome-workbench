@@ -5,8 +5,6 @@ bayestyper_tools=config['programs']['bayestyper_tools']
 graphtyper=config['programs']['graphtyper']
 rtg=config['programs']['rtg']
 truvari = config['programs']['truvari']
-vartypes_leave1out = [var for c in config["callsets"].keys() for t in config["callsets"][c]["leave1out"].keys() for var in config["callsets"][c]["leave1out"][t]["vartype"]]
-vartypes_external = [var for c in config["callsets"].keys() for t in config["callsets"][c]["external"].keys() for var in config["callsets"][c]["external"][t]["vartype"]]
 
 ###########################################################
 #################      Evaluation        ##################
@@ -52,9 +50,11 @@ rule postprocessing_callset:
 		"../envs/genotyping.yml"
 	params:
 		untypables = lambda wildcards: f" python workflow/scripts/skip-untypable.py preprocessing/{wildcards.callset}/{wildcards.sample}/{wildcards.pipeline}/untypables/untypables.tsv |" if wildcards.filter == 'typable' else ""
+	log:
+		"logs/genotyping/{callset}/{sample}/{pipeline}/{version}/{coverage}/callset-{filter}_{vartype}.log"
 	shell:
 		"""
-		{bcftools} view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
+		(/usr/bin/time -v {bcftools} view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}) &> {log}
 		tabix -p vcf {output.vcf}
 		"""
 
@@ -74,9 +74,11 @@ rule postprocessing_truthset:
 		"../envs/genotyping.yml"
 	params:
 		untypables = lambda wildcards: f" python workflow/scripts/skip-untypable.py preprocessing/{wildcards.callset}/{wildcards.sample}/{wildcards.pipeline}/untypables/untypables.tsv |" if wildcards.filter == 'typable' else ""
+	log:
+		"logs/genotyping/{callset}/{sample}/{pipeline}/truthset/truthset-{filter}_{vartype}.log"
 	shell:
 		"""
-		{bcftools} view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
+		(/usr/bin/time -v {bcftools} view {input.vcf} | {params.untypables} python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}) &> {log}
 		tabix -p vcf {output.vcf}
 		"""
 
@@ -159,6 +161,9 @@ rule evaluate_with_truvari:
 	threads: 1
 	shell:
 		"""
+		if [ -d {params.tmp} ]; then
+			rm -r {params.tmp}
+		fi
 		{bcftools} view {input.callset} --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.fixed_vcf}
 		tabix -p vcf {output.fixed_vcf}
 		(/usr/bin/time -v {truvari} bench -b {input.baseline} -c {output.fixed_vcf} -f {input.reference} -o {params.tmp} --pick multi {params.bed} -r 2000 --no-ref a -C 2000 --passonly) &> {log}
@@ -284,36 +289,83 @@ rule plotting_versions_leave1out:
 
 
 # plot results of different subsampling runs, comparing concordance and typed variants per sample
-rule plotting_versions_conc_vs_untyped:
+rule plotting_versions_conc_vs_untyped_leave1out:
 	input:
-		lambda wildcards: expand("results/leave-one-out/{{callset}}/{version}/plots/{{coverage}}/concordance-{{callset}}-{version}-{{coverage}}_{{regions}}_{vartype}.tsv", version=versions_leave_one_out, vartype=config['callsets'][wildcards.callset]['variants'])
+		lambda wildcards: expand("evaluation/{{callset}}/{{sample}}/leave1out/plots/concordance-{version}-{{coverage}}-{{filter}}-{{region}}_{vartype}.tsv", version=versions_to_run, vartype=vartypes_leave1out)
 	output:
-		"results/leave-one-out/{callset}/plots/comparison-versions/concordance-vs-untyped/concordance-vs-untyped_{coverage}_{regions}.pdf"
+		"evalplots/{callset}/{sample}/leave1out/comparison-versions/concordance-vs-untyped-{coverage}-{filter}-{region}.pdf"
+		# "results/leave-one-out/{callset}/plots/comparison-versions/concordance-vs-untyped/concordance-vs-untyped_{coverage}_{regions}.pdf"
 	wildcard_constraints:
-		regions="biallelic|multiallelic"
-	priority: 1
+		region="bi|multi|all",
+		filter="typable|all"
 	conda:
 		"../envs/genotyping.yml"
+	log:
+		"logs/evalplots/{callset}/{sample}/leave1out/comparison-versions/concordance-vs-untyped-{coverage}-{filter}-{region}.log"
 	params:
-		sources = lambda wildcards: ' '.join([wildcards.callset + '-' + v + '-' + wildcards.coverage + '_' + wildcards.regions for v in versions_leave_one_out])
+		sources = lambda wildcards: ' '.join([v + '-' + wildcards.coverage + '-' + wildcards.filter + '-' + wildcards.region for v in versions_to_run]),
+		vartypes = vartypes_leave1out
 	shell:
-		"python workflow/scripts/plot-results.py -files {input} -outname {output} -sources {params.sources} -metric concordance-vs-untyped"
+		"(python workflow/scripts/plot-results.py -files {input} -outname {output} -sources {params.sources} -metric concordance-vs-untyped -vartypes {params.vartypes}) &> {log}"
 		
 
+def collect_logs_all_unit_ids_bayestyper(wildcards):
+	checkpoint_output = checkpoints.bayestyper_cluster.get(**wildcards).output[0]
+	result = expand("logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/genotype/bayestyper_unit_{unit_id}/bayestyper.log",
+					callset=wildcards.callset,
+					sample=wildcards.sample,
+					coverage=wildcards.coverage,
+					unit_id=glob_wildcards(os.path.join(checkpoint_output, "bayestyper_unit_{unit_id}/variant_clusters.bin")).unit_id)
+	return sorted(result)
 
-# plot results of different coverages
-rule plotting_coverages:
+rule collect_runtime_info_bayestyper:
 	input:
-		lambda wildcards: expand("results/leave-one-out/{{callset}}/{{version}}/plots/{coverage}/{m}-{{callset}}-{{version}}-{coverage}_{{regions}}_{vartype}.tsv", m = wildcards.metric if wildcards.metric != 'untyped' else 'concordance', coverage=coverages_leave_one_out, vartype=config['callsets'][wildcards.callset]['variants'])
+		bayestyper_kmers = "logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}_kmc.log",
+		bayestyper_bloomfilter = "logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}_bloom.log",
+		bayestyper_clusters = "logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/clusters/clusters-log.log",
+		bayestyper_genotype = collect_logs_all_unit_ids_bayestyper
 	output:
-		"results/leave-one-out/{callset}/plots/comparison-coverages/{metric}/{metric}_{version}_{regions}.pdf"
+		"logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/runtime.log"
+	shell:
+		"cat {input.bayestyper_kmers} {input.bayestyper_bloomfilter} {input.bayestyper_clusters} {input.bayestyper_genotype} > {output}"
+
+rule collect_runtime_info_graphtyper:
+	input:
+		graphtyper_aligning_reads = "logs/preprocessing/downsampling/{callset}/{coverage}/aligned/{sample}_full_mem.log",
+		graphtyper_indexing_reads = lambda wildcards: expand("logs/preprocessing/downsampling/{{callset}}/{{coverage}}/aligned/{{sample}}_full.chr{chrom}-index.log", chrom=chromosomes),
+		graphtyper_genotype = lambda wildcards: expand("logs/genotyping/{{callset}}/{{sample}}/graphtyper/{{coverage}}/temp/{variant}/chr{chrom}.log", chrom=chromosomes, variant=["snp-indel", "sv"])
+	output:
+		"logs/genotyping/{callset}/{sample}/graphtyper/{coverage}/runtime.log"
+	conda:
+		"../envs/genotyping.yml"
+	shell:
+		"cat {input.graphtyper_aligning_reads} {input.graphtyper_indexing_reads} {input.graphtyper_genotype} > {output}"
+
+rule collect_runtime_info_pangenie:
+	input:
+		pangenie_index = "logs/genotyping/{callset}/{sample}/{version}/{coverage}/index.log",
+		pangenie_genotype = "logs/genotyping/{callset}/{sample}/{version}/{coverage}/genotyping.log"
+	output:
+		"logs/genotyping/{callset}/{sample}/{version}/{coverage}/runtime.log"
 	wildcard_constraints:
-		metric="concordance|precision-recall-typable|untyped",
-		regions="biallelic|multiallelic"
-	priority: 1
+		version = "|".join([k for k in config['pangenie-modules'].keys()] + ['^' + k for k in config['pangenie']])
+	shell:
+		"cat {input.pangenie_index} {input.pangenie_genotype} > {output}"
+        
+        
+
+# plot resources (single core CPU time and max RSS) for different subsampling runs
+rule plotting_resources:
+	input:
+		lambda wildcards: expand("logs/genotyping/{{callset}}/{{sample}}/{version}/{{coverage}}/runtime.log", version = versions_to_run)
+		# lambda wildcards: expand("results/leave-one-out/{{callset}}/{version}/{sample}/{{coverage}}/{version}-{sample}.log", version = versions_leave_one_out, sample = config['callsets'][wildcards.callset]['leave_one_out_samples'])
+	output:
+		"evalplots/{callset}/{sample}/resources/resources_{coverage}.pdf"
 	conda:
 		"../envs/genotyping.yml"
 	params:
-		sources = lambda wildcards: ' '.join([wildcards.callset + '-' + wildcards.version + '-' + c + '_' + wildcards.regions for c in coverages_leave_one_out])
+		outname = "evalplots/{callset}/{sample}/resources/resources_{coverage}",
+		versions = " ".join(versions_to_run)
 	shell:
-		"python workflow/scripts/plot-results.py -files {input} -outname {output} -sources {params.sources} -metric {wildcards.metric}"
+		"python workflow/scripts/plot-resources.py -files {input} -outname {params.outname} -samples {wildcards.sample} -versions {params.versions}"
+

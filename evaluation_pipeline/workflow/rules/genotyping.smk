@@ -1,4 +1,3 @@
-chromosomes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X"]
 ref_chromosomes = {}
 for c in config['callsets'].keys():
     ref_chromosomes[c] = []
@@ -256,13 +255,13 @@ rule split_vcf_by_chromosome:
         bcftools view {input.vcf} -r chr{wildcards.chrom} | bgzip -c  > {output.vcf}
         tabix -p vcf {output.vcf}
         """
-
+ 
 # Input VCF for graphtyper must be biallelic
 rule graphtyper_preprocess:
 	input:
 		vcf="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz",
 		tbi="preprocessing/{callset}/{sample}/input-panel/splitted/panel_bi_chr{chrom}.vcf.gz.tbi"
-	output:
+	output: #### correct here with splitted inside 
 		vcf="preprocessing/{callset}/{sample}/input-panel/panel_bi_chr{chrom}_{variant}.vcf.gz",
 		tbi="preprocessing/{callset}/{sample}/input-panel/panel_bi_chr{chrom}_{variant}.vcf.gz.tbi"
 	wildcard_constraints:
@@ -328,6 +327,7 @@ rule merge_vcfs_all_chromosomes_and_normalize:
         """
         bcftools concat -a {input.vcfs} | bcftools norm -f {input.reference} -m -any | bcftools sort > {output}
         """
+        # bcftools concat -a {input.vcfs} | bcftools norm -f {input.reference} -m -any | bcftools sort | python workflow/scripts/reheader_vcf.py > {output}
 
 
 
