@@ -27,7 +27,7 @@ for line in gzip.open(args.vcf, 'rt'):
 for line in sys.stdin:
 	if line.startswith('#'):
 		# header line
-		if any([i in line for i in ['INFO=<ID=AF', 'INFO=<ID=AK', 'FORMAT=<ID=GL', 'FORMAT=<ID=KC']]):
+		if any([i in line for i in ['INFO=<ID=AK', 'FORMAT=<ID=GL', 'FORMAT=<ID=KC']]):
 			# these fields will not be contained in biallelic VCF
 			continue
 		print(line[:-1])

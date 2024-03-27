@@ -1,4 +1,7 @@
 # stores paths to reads
+gdown = config['programs']['gdown']
+samtools = config['programs']['samtools']
+bedtools = config['programs']['bedtools']
 read_paths = {}
 
 for line in open(config['reads'], 'r'):
@@ -50,7 +53,7 @@ rule ucsc_repeats:
 	output:
 		"data/downloaded/bed/hg38/{callset}/ucsc-simple-repeats.merged.bed"
 	shell:
-		"bedtools sort -i {input} | bedtools merge -i - > {output}"
+		"{bedtools} sort -i {input} | {bedtools} merge -i - > {output}"
 
 
 
@@ -182,7 +185,7 @@ rule index_hg38_reference:
 	output:
 		"data/downloaded/fasta/{filename}.fa.fai"
 	shell:
-		"samtools faidx {input}"
+		"{samtools} faidx {input}"
 
 rule bwa_index_fasta:
 	input:
@@ -212,12 +215,7 @@ rule download_BayesTyper_GRCh38_bundle:
         file_id = "1ioTjLFkfmvOMsXubJS5_rwpfajPv5G1Q"
     shell:
         """
-        wget --load-cookies /tmp/cookies.txt \
-        "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate \
-        'https://drive.google.com/uc?export=download&id={params.file_id}' -O- | \
-        sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\\1\\n/p')&id={params.file_id}" \
-        -O {output.compressed_bundle} && rm -rf /tmp/cookies.txt
-        
+        {gdown} {params.file_id} -O {output.compressed_bundle}
         tar -xvf {output.compressed_bundle} -C {output.uncompressed_bundle} 
         """
 

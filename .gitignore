@@ -1,4 +1,5 @@
 **/downloaded
+**/evalplots
 **/evaluation
 **/.snakemake/
 **/dev_test

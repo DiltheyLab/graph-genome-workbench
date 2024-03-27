@@ -5,19 +5,21 @@ import numpy as np
 import argparse
 
 
-def plot_concordances_all(files, outname, sources):
+def plot_concordances_all(files, outname, sources, vartypes):
 	var_to_name = {
 		'snp' : 'SNPs',
 		'indels': 'indels (1-49bp)',
 		'large-insertion': 'SV insertions (>=50bp)',
 		'large-deletion': 'SV deletions (>=50bp)',
-		'large-complex': 'SV complex (>=50bp)'
+		'large-complex': 'SV complex (>=50bp)',
+		'snp-indel' : 'SNPs + indels (1-49bp)',
+		'sv': 'SV (>=50bp)'
 		}
 
 	colors = ['#377eb8', '#ff7f00', '#4daf4a', '#f781bf', '#a65628', '#984ea3', '#808080', '#f7ce37', '#bc202c', '#251188']
 	type_to_file = {}
 	n_rows = 4
-	n_cols = 5
+	n_cols = len(vartypes)
 	plt.figure(figsize=(19,20))
 	for source in sources:
 		for f in files:
@@ -25,7 +27,7 @@ def plot_concordances_all(files, outname, sources):
 				continue
 			vartype = f.split('_')[-1][:-4]
 			type_to_file[(source, vartype)] = f
-	variants = ['snp', 'indels', 'large-deletion', 'large-insertion']
+	variants = vartypes
 	plot_index = 1
 	for var in variants:
 		plt.subplot(n_rows, n_cols, plot_index)
@@ -34,7 +36,7 @@ def plot_concordances_all(files, outname, sources):
 		x_values = []
 		is_first = True
 		for i,source in enumerate(sources):
-			print('source', source)
+			print('variant', var, 'source', source)
 			samples = []
 			concordances = []
 			if not (source, var) in type_to_file:
@@ -52,7 +54,7 @@ def plot_concordances_all(files, outname, sources):
 			is_first = False
 			x_values = [i*5 for i in range(len(samples))]
 			plt.plot(x_values, concordances, label=source, color=colors[i], marker='o')
-		plt.ylim(40,100)
+		plt.ylim(0,100)
 		plt.title(var_to_name[var])
 		plt.xticks(x_values, all_samples, rotation='vertical')
 		plt.ylabel('weighted genotype concordance [%]')
@@ -71,19 +73,21 @@ def plot_concordances_all(files, outname, sources):
 
 
 
-def plot_untyped_all(files, outname, sources):
+def plot_untyped_all(files, outname, sources, vartypes):
 	var_to_name = {
 		'snp' : 'SNPs',
 		'indels': 'indels (1-49bp)',
 		'large-insertion': 'SV insertions (>=50bp)',
 		'large-deletion': 'SV deletions (>=50bp)',
-		'large-complex': 'SV complex (>=50bp)'
+		'large-complex': 'SV complex (>=50bp)',
+		'snp-indel' : 'SNPs + indels (1-49bp)',
+		'sv': 'SV (>=50bp)'
 		}
 
 	colors = ['#377eb8', '#ff7f00', '#4daf4a', '#f781bf', '#a65628', '#984ea3', '#808080', '#f7ce37', '#bc202c', '#251188']
 	type_to_file = {}
 	n_rows = 4
-	n_cols = 5
+	n_cols = len(vartypes)
 	plt.figure(figsize=(19,20))
 	for source in sources:
 		for f in files:
@@ -91,7 +95,7 @@ def plot_untyped_all(files, outname, sources):
 				continue
 			vartype = f.split('_')[-1][:-4]
 			type_to_file[(source, vartype)] = f
-	variants = ['snp', 'indels', 'large-deletion', 'large-insertion']
+	variants = vartypes
 	plot_index = 1
 	for var in variants:
 		plt.subplot(n_rows, n_cols, plot_index)
@@ -100,7 +104,7 @@ def plot_untyped_all(files, outname, sources):
 		x_values = []
 		is_first = True
 		for i,source in enumerate(sources):
-			print('source', source)
+			print('variant', var, 'source', source)
 			samples = []
 			untyped = []
 			if not (source, var) in type_to_file:
@@ -137,19 +141,21 @@ def plot_untyped_all(files, outname, sources):
 
 
 
-def plot_fscores_all(files, outname, sources):	
+def plot_fscores_all(files, outname, sources, vartypes):	
 	var_to_name = {
 		'snp' : 'SNPs',
 		'indels': 'indels (1-49bp)',
 		'large-insertion': 'SV insertions (>=50bp)',
 		'large-deletion': 'SV deletions (>=50bp)',
-		'large-complex': 'SV complex (>=50bp)'
+		'large-complex': 'SV complex (>=50bp)',
+		'snp-indel' : 'SNPs + indels (1-49bp)',
+		'sv': 'SV (>=50bp)'
 		}
 
 	colors = ['#377eb8', '#ff7f00', '#4daf4a', '#f781bf', '#a65628', '#984ea3', '#808080', '#f7ce37', '#bc202c', '#251188']
 	type_to_file = {}
 	n_rows = 4
-	n_cols = 5
+	n_cols = len(vartypes)
 	plt.figure(figsize=(19,20))
 	for source in sources:
 		for f in files:
@@ -157,7 +163,7 @@ def plot_fscores_all(files, outname, sources):
 				continue
 			vartype = f.split('_')[-1][:-4]
 			type_to_file[(source, vartype)] = f
-	variants = ['snp', 'indels', 'large-deletion', 'large-insertion']
+	variants = vartypes
 	plot_index = 1
 	for var in variants:
 		plt.subplot(n_rows, n_cols, plot_index)
@@ -165,9 +171,10 @@ def plot_fscores_all(files, outname, sources):
 		all_samples = []
 		is_first = True
 		for i,source in enumerate(sources):
-			print('source', source)
+			print('variant', var, 'source', source)
 			samples = []
 			fscores = []
+			print(type_to_file.keys())
 			for line in open(type_to_file[(source,var)], 'r'):
 				if line.startswith('sample'):
 					continue
@@ -199,17 +206,19 @@ def plot_fscores_all(files, outname, sources):
 
 
 
-def plot_concordance_vs_untyped(files, outname, sources):
+def plot_concordance_vs_untyped(files, outname, sources, vartypes):
 	var_to_name = {
 		'snp' : 'SNPs',
 		'indels': 'indels (1-49bp)',
 		'large-insertion': 'SV insertions (>=50bp)',
 		'large-deletion': 'SV deletions (>=50bp)',
-		'large-complex': 'SV complex (>=50bp)'
+		'large-complex': 'SV complex (>=50bp)',
+		'snp-indel' : 'SNPs + indels (1-49bp)',
+		'sv': 'SV (>=50bp)'
 		}
 	colors = ['#377eb8', '#ff7f00', '#4daf4a', '#f781bf', '#a65628', '#984ea3', '#808080', '#f7ce37', '#bc202c', '#251188']
 	type_to_file = {}
-	n_rows = 5 # one row per variant type
+	n_rows = len(vartypes) # one row per variant type
 	plt.figure(figsize=(19,20))
 	for source in sources:
 		for f in files:
@@ -217,13 +226,14 @@ def plot_concordance_vs_untyped(files, outname, sources):
 				continue
 			vartype = f.split('_')[-1][:-4]
 			type_to_file[(source, vartype)] = f
-	variants = ['snp', 'indels', 'large-deletion', 'large-insertion']
+	variants = vartypes
 	data = {}
 	all_samples = []
 	is_first = True
 	plot_index = 1
 	for var in variants:
 		for i, source in enumerate(sources):
+			print('variant', var, 'source', source)
 			if not (source, var) in type_to_file:
 				continue	
 			for line in open(type_to_file[(source,var)], 'r'):
@@ -260,20 +270,19 @@ def plot_concordance_vs_untyped(files, outname, sources):
 	plt.figlegend(handles, labels)
 	plt.savefig(outname)
 
-
-
 parser = argparse.ArgumentParser(prog='plot-results.py', description="Plot concordances or precision/recall statistics.")
 parser.add_argument('-files', metavar='FILES', nargs='+', help='files with results per sample.')
 parser.add_argument('-outname', metavar='OUTNAME', required=True, help='Name of the output file.')
 parser.add_argument('-sources',  metavar='SOURCES', nargs='+', help='regions concordance_all')
-parser.add_argument('-metric', metavar='METRIC', required=True, choices=['concordance', 'precision-recall-typable', 'untyped', 'concordance-vs-untyped'], help='Which metric to use for plotting.')
+parser.add_argument('-metric', metavar='METRIC', required=True, choices=['concordance', 'precision-recall', 'untyped', 'concordance-vs-untyped'], help='Which metric to use for plotting.')
+parser.add_argument('-vartypes', metavar='VARTYPES', nargs='+', help='Which vartypes to include in plotting.')
 args = parser.parse_args()
 
 if args.metric == 'concordance':
-	plot_concordances_all(args.files, args.outname, args.sources)
+	plot_concordances_all(args.files, args.outname, args.sources, args.vartypes)
 elif args.metric == 'untyped':
-	plot_untyped_all(args.files, args.outname, args.sources)
-elif args.metric == 'precision-recall-typable':
-	plot_fscores_all(args.files, args.outname, args.sources)
+	plot_untyped_all(args.files, args.outname, args.sources, args.vartypes)
+elif args.metric == 'precision-recall':
+	plot_fscores_all(args.files, args.outname, args.sources, args.vartypes)
 else:
-	plot_concordance_vs_untyped(args.files, args.outname, args.sources)
+	plot_concordance_vs_untyped(args.files, args.outname, args.sources, args.vartypes)

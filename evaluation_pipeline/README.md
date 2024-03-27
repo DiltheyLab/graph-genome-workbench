@@ -21,7 +21,7 @@ The pipeline contains the following components:
 
 We applied the pipeline to the following data: A 64-haplotype Pangenome graph derived from the “Human Genome Structural Variation Consortium” (HGSVC) and the reads come from the standard benchmarking sample NA24385/HG002 of the “Genome In A Bottle” (GIAB) Consortium).
 
-So far, only leave-one-out experiments are included (i.e. tool's genotyping performance is evaluated by removing one of the panel samples from the input VCF, and then genotyping it using a panel containing the remaining n-1 samples only).  External validation (i.e. using an external benchmarking truth dataset) is work in progress. 
+Regarding the pipeline choice, there are two possibilities: leave-one-out experiments (i.e. tool's genotyping performance is evaluated by removing one of the panel samples from the input VCF, and then genotyping it using a panel containing the remaining n-1 samples only), or external evaluation (i.e. using an external benchmarking truth dataset). 
 
 ## How to set up
 
@@ -38,16 +38,33 @@ callsets:
         bi: "/path/to/biallelic-Pangenome-graph"
         # reference genome in FASTA format
         reference: "/path/to/reference"
-        # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion
-        variants:
-            - Variant1
-            - Variant2
+        reference_fai: "/path/to/reference_index"
         # repeat annotations in BED format
         repeat_regions: "/path/to/repeats-bed"
-        # samples to run a leave-one-out experiment on
-        leave_one_out_samples: # specify the sample IDs to evaluate on (should match those of read data file)
-            - SAMPLE_ID
+        leave1out: 
+            sampleX: # specify the sample IDs to evaluate wiht leave-one-out pipeline on (should match those of read data file)
+                regions: # options: all, multi, bi
+                    - region1
+                    - ...
+                filters: # options: all, typable
+                    - filter1
+                    - ...
+                vartype: # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion or snp-indel|sv depending on pipeline
+                    - vartype1
+                    - ...
+        external: 
+            sampleY: # specify the sample IDs to evaluate wiht external pipeline on (should match those of read data file)
+                path: "/path/to/truthset" # benchmark dataset used a truth for external evaluation 
+                callable_regions: "/path/to/callable_regions" # path to BED with callable regions
+                vartype: # options: snp-indel, sv
+                    - vartype1
+                    - ...
+                regions: # options: all, multi, bi
+                    - all
+                filters: # options: all, typable
+                    - typable
 
+        
 # Summary of read data in TSV format. File required that specifies a sample name, path to FASTA/FASTQ data and superpopulation:
 # FamilyID	SampleID	FatherID	MotherID	Population	Superpopulation	Sample_Illumina
 # FamilyID: specifies the name of a trio
@@ -83,12 +100,15 @@ programs:
 utils:
     bayestyper_reference_canon: "/path/to/canon-reference-for-Bayestyper"
     bayestyper_reference_decoy: "/path/to/decoy-reference-for-Bayestyper"
+    tmp_workdir_computations: "/path/to/tmp_directory" # some operations requires a lot of disk memory, and in some cases it's required more than 50Gb. To avoid problems we specify a temporary directory with enough disk space
 ```
 
 
 For instance, the configuration file used for our experiments is: 
 
 ```yaml
+
+### callsets to be used as input to genotyping tools (multiple ones can be listed)
 
 ### callsets to be used as input to genotyping tools (multiple ones can be listed)
 callsets:
@@ -99,52 +119,78 @@ callsets:
         bi: "data/downloaded/vcf/HGSVC-GRCh38/Callset_freeze3_64haplotypes.vcf.gz"
         # reference genome in FASTA format
         reference: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa"
-        # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion
-        variants:
-            - snp 
-            - indels
-            - large-deletion
-            - large-insertion
-        # repeat annotations in BED format
+        reference_fai: "data/downloaded/fasta/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai"
         repeat_regions: "resources/ucsc-simple-repeats.bed"
-        # samples to run a leave-one-out experiment on
-        leave_one_out_samples: # specify the samples to evaluate on
-            - NA24385
+        leave1out: # specify the samples to evaluate on
+            NA24385:
+                regions: # options: all, multi, bi
+                    - all
+                    - multi
+                    - bi
+                filters: # options: all, typable
+                    - typable
+                vartype: # variants contained in the callset. Options are: snp|indels|large-deletion|large-insertion
+                    - snp 
+                    - indels
+                    - large-deletion
+                    - large-insertion
+        external: # specify the samples to (externally) evaluate on
+            NA24385: 
+                path: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" # benchmark dataset used a truth for external evaluation 
+                callable_regions: "data/downloaded/vcf/giab/hg38/HG002_GRCh38_1_22_v4.2.1_benchmark.bed" # path to BED with callable regions
+                vartype: # options: snp-indel, sv
+                    - snp-indel
+                    - sv
+                regions: # options: all, multi, bi
+                    - all
+                filters: # options: all, typable
+                    - typable
+                    
 
 # read data. File required that specifies a sample name, path to FASTA/FASTQ data and superpopulation:
 # FamilyID	SampleID	FatherID	MotherID	Population	Superpopulation	Sample_Illumina
 reads: "resources/reads.tsv"
 
+
 # PanGenie command. Different versions can be run by listing several commandlines
 pangenie: {}
     
+
 # PanGenie command to be used for modularised versions of PanGenie
 pangenie-modules: 
     pangenie.v3: "/usr/local/bin/PanGenie_v3.0.0"
 
+
 # Downsampling coverages for leave-one-out experiment. If reads shall not be downsampled, leave empty.
 downsampling: []
+
 
 # Other programs
 programs:
     rtg: "/home/ubuntu/rtg-tools-3.12.1/rtg"
-    bwa: "/usr/bin/bwa"
-    bayestyper: "/usr/local/bin/bayesTyper"
-    bayestyper_tools: "/usr/local/bin/bayesTyperTools"
-    graphtyper: "/usr/local/bin/graphtyper"
-    kmc: "/usr/bin/kmc"
-    truvari: "/usr/local/bin/truvari"
+    bwa: "bwa"
+    samtools: "samtools"
+    bcftools: "bcftools"
+    bedtools: "bedtools"
+    bayestyper: "bayesTyper"
+    bayestyper_tools: "bayesTyperTools"
+    graphtyper: "graphtyper"
+    kmc: "kmc"
+    truvari: "truvari"
+    gdown: "gdown"
+
 
 # Other parameters
 utils:
     bayestyper_reference_canon: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_canon.fa"
     bayestyper_reference_decoy: "data/downloaded/bayestyper_utils/bayestyper_GRCh38_bundle_v1.3/GRCh38_decoy.fa"
+    tmp_workdir_computations: "/vol/story"
 ```  
 
 ## Required input data
 
 ### VCFs
-This pipeline requires two input VCFs: a multi-allelic VCF representing bubbles and haplotypes in a pangenome graph ("multi"), and a bi-allelic callset VCF describing the underlying variant alleles ("bi"). In the mult-allelic VCF, each record represents a bubble in the graph and lists all paths covered by at least one haplotypes as the alternative allele sequences. Each such alternative allele is annotated by a sequence of variant IDs (separated by a colon) in the INFO field, indicating which individual variant alleles it is composed of (since bubbles are usually composed of many individual variant alleles). The bi-allelic VCF contains one separate record for each such variant ID. See the figure below for an illustration. Both VCFs describe the same genetic variation, but using different ways of representation. In this pipeline, the multi-allelic VCFs are used as input to PAnGenie and BayesTyper for genotyping, whereas GraphTyper requires a biallelic file. Using the annotations, the resulting bubble genotypes can be translated into genotypes for each individual variant ID. This enables properly analysing variant alleles contained inside of bubbles.
+This pipeline requires two input VCFs: a multi-allelic VCF representing bubbles and haplotypes in a pangenome graph ("multi"), and a bi-allelic callset VCF describing the underlying variant alleles ("bi"). In the mult-allelic VCF, each record represents a bubble in the graph and lists all paths covered by at least one haplotypes as the alternative allele sequences. Each such alternative allele is annotated by a sequence of variant IDs (separated by a colon) in the INFO field, indicating which individual variant alleles it is composed of (since bubbles are usually composed of many individual variant alleles). The bi-allelic VCF contains one separate record for each such variant ID. See the figure below for an illustration. Both VCFs describe the same genetic variation, but using different ways of representation. In this pipeline, the multi-allelic VCFs are used as input to PanGenie and BayesTyper for genotyping, whereas GraphTyper requires a biallelic file. Using the annotations, the resulting bubble genotypes can be translated into genotypes for each individual variant ID. This enables properly analysing variant alleles contained inside of bubbles. When using a external pipeline, the truthset should also be provided. Note that variants can be represented in different ways depending on the provider. This might influence outcomes. 
 
 ![VCF representations](vcfs.png)
 
@@ -177,12 +223,11 @@ BED file defining repeat regions. See `` resources/ `` folder for files that can
 
 **Requirements**
 
-Within de.NBI, we recommend to mount a volume of at least 500 Gb, so not to run into disk memory because of the large size of short-read data. Moreover, follow the next instructions:
+Within de.NBI, we recommend to mount a volume of at least 1000 Gb, so not to run into disk memory because of the large size of short-read data. Moreover, follow the next instructions:
 
 - Create and mount the volume following the [deNBI instructions](https://cloud.denbi.de/wiki/simple_vm/volumes/) and navigate until the desired directory within the volume, where the experiments will be carried out.  
 - Clone this repository with `https://github.com/DiltheyLab/graph-genome-workbench.git` and navigate to `evaluation_pipeline`.
 - Specify paths to input files and parameters needed in the config file: `` config/config.yaml `` as explained above. (applicable if input data is already at hand).
-- Run `conda install -n base -c conda-forge mamba` in order to be able to use the `--use-conda` attribute in Snakemake.
 
 **Testing**
 
@@ -194,11 +239,23 @@ Regarding the pipeline execution, we splitted the pipeline into two workflows to
 
 The download data workflow can be run using the following command:
 
-``  snakemake --profile workflow/profiles download_data  `` 
+``  snakemake --profile workflow/profile-default/ -s workflow/rules/download-data.smk download_data  `` 
 
-The leave-one-out workflow can be run using the following command:
+The evaluation pipeline can be run using the following command:
+Apriori modifications: 
+- Adapt tmp_workdir_computations to a large size-volume directory (at least 100 Gb free)
 
-``  snakemake --profile workflow/profiles leave_one_out  ``
+``  snakemake --profile workflow/profile-default/  ``
+
+Alternatively, it can also be run in a reduced version (as a sanity-check, onle chrom17):
+Apriori modifications: 
+- Set the chromosomes values to the chrom variable in reduced-data.sh.
+
+```
+./workflow/scripts/reduced-data.sh  
+snakemake --profile workflow/profile-reduced-data/
+```
+
 
 ## Acknowledgements
 

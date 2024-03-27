@@ -40,7 +40,6 @@ rule remove_missing:
 		"../envs/genotyping.yml"
 	resources:
 		mem_total_mb=20000
-	priority: 1
 	wildcard_constraints:
 		representation = "bi|multi"
 	shell:
@@ -51,21 +50,24 @@ rule prepare_panel:
 	input:
 		"preprocessing/{callset}/{sample}/input-panel/panel_{representation}_no-missing.vcf"
 	output:
-		"preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf"
+		vcf="preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf",
+		vcf_comp="preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/input-panel/panel_{representation}.vcf.gz.tbi"
 	conda:
 		"../envs/genotyping.yml"
-	priority: 1
 	wildcard_constraints:
 		representation = "bi|multi"
 	params: 
-		lambda wildcards: "| python3 workflow/scripts/annotate-ids.py" if wildcards.representation == 'bi' else ""
+		lambda wildcards: "| python workflow/scripts/annotate-ids.py" if wildcards.representation == 'bi' else ""
 	log:
 		"logs/preprocessing/{callset}/{sample}/input-panel/panel_{representation}.log"
 	resources:
 		mem_total_mb=20000
 	shell:
 		"""
-		(/usr/bin/time -v bcftools view --samples ^{wildcards.sample} {input} | bcftools view --min-ac 1 {params} > {output} ) &> {log}
+		(/usr/bin/time -v bcftools view --samples ^{wildcards.sample} {input} | bcftools view --min-ac 1 {params} > {output.vcf} ) &> {log}
+		bgzip -c {output.vcf} > {output.vcf_comp}
+		tabix -p vcf {output.vcf_comp}
 		"""
 
 rule normalize_input_panel:
@@ -74,9 +76,13 @@ rule normalize_input_panel:
 		reference = lambda wildcards: config['callsets'][wildcards.callset]['reference']
 	output:
 		vcf = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf",
+		vcf_comp = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf.gz",
+		tbi = "preprocessing/{callset}/{sample}/input-panel/panel_multi_norm.vcf.gz.tbi"
 	shell:
 		"""
 		bcftools norm -m +any -d all -f {input.reference} {input.vcf} | bcftools sort > {output.vcf}
+		bgzip -c {output.vcf} > {output.vcf_comp}
+		tabix -p vcf {output.vcf_comp}
 		"""
 
 rule prepare_truth_leave1out_to_biallelic:
@@ -85,15 +91,16 @@ rule prepare_truth_leave1out_to_biallelic:
 		panel = lambda wildcards: config['callsets'][wildcards.callset]['bi'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']
 	output:
-		"preprocessing/{callset}/{sample}/leave1out/truthset/truthset-biallelic.vcf.gz",
+		vcf="preprocessing/{callset}/{sample}/leave1out/truthset/truthset-biallelic.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/leave1out/truthset/truthset-biallelic.vcf.gz.tbi"
 	conda:
 		"../envs/genotyping.yml"
 	resources:
 		mem_total_mb=20000
 	shell:
 		"""
-        bcftools view --samples {wildcards.sample} {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output}
-        tabix -p vcf {output}
+        bcftools view --samples {wildcards.sample} {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output.vcf}
+        tabix -p vcf {output.vcf}
         """
 
 rule prepare_truth_external_to_biallelic:
@@ -102,18 +109,20 @@ rule prepare_truth_external_to_biallelic:
 		panel = lambda wildcards: config['callsets'][wildcards.callset]['bi'],
 		ref_index = lambda wildcards: config['callsets'][wildcards.callset]['reference_fai']
 	output:
-		"preprocessing/{callset}/{sample}/external/truthset/truthset-biallelic.vcf.gz"
+		vcf="preprocessing/{callset}/{sample}/external/truthset/truthset-biallelic.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/external/truthset/truthset-biallelic.vcf.gz.tbi"
 	shell:
 		"""
-		bcftools norm -m -any {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output}
-		tabix -p vcf {output}
+		bcftools norm -m -any {input.truthset} | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | python workflow/scripts/annotate.py {input.panel} | bgzip -c > {output.vcf}
+		tabix -p vcf {output.vcf}
 		"""
 
 rule split_truthset_by_variants:
 	input:
 		"preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset-biallelic.vcf.gz",
 	output:
-		"preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic.vcf.gz",
+		vcf="preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic.vcf.gz",
+		tbi="preprocessing/{callset}/{sample}/{pipeline}/truthset/truthset_{vartype}-biallelic.vcf.gz.tbi"
 	conda:
 		"../envs/genotyping.yml"
 	wildcard_constraints:
@@ -122,8 +131,8 @@ rule split_truthset_by_variants:
 		mem_total_mb=20000
 	shell:
 		"""
-        bcftools view {input} | python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output}
-        tabix -p vcf {output}
+        bcftools view {input} | python workflow/scripts/extract-varianttype.py {wildcards.vartype} | bgzip -c > {output.vcf}
+        tabix -p vcf {output.vcf}
         """
 
 
@@ -148,6 +157,7 @@ rule rtg_format:
 ########################################################
 
 ######## Compute Untypables ########
+####### split this rule into two different depending on vartype, as truvari is using just 1 core but still is getting 24, which slows down its computational speed
 ####  Find out which variants in the truth set are not contained in the pangenome graph (=untypables, because our methods are re-genotypers, i.e. no new variants detected)
 #### Assign each variant a unique ID (if a variant matches with panel, use the same ID as panel).
 rule determine_false_negatives:
@@ -167,7 +177,7 @@ rule determine_false_negatives:
 	params:
 		tmp="preprocessing/{callset}/{sample}/{pipeline}/untypables/samples/{panelsample}/{vartype}_temp",
 		outname="preprocessing/{callset}/{sample}/{pipeline}/untypables/samples/{panelsample}/{vartype}"
-	threads: 1
+	threads: 24
 	resources:
 		mem_total_mb=50000,
 		runtime_hrs=0,
@@ -179,7 +189,7 @@ rule determine_false_negatives:
 		bcftools view --samples {wildcards.panelsample} {input.panel} | bcftools view --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.sample_vcf}
 		tabix -p vcf {output.sample_vcf}
 		if [ "{wildcards.vartype}" == "snp-indel" ]; then 
-			(/usr/bin/time -v {rtg} vcfeval -b {input.truthset} -c {output.sample_vcf} -t {input.sdf} -o {params.tmp} --squash-ploidy ) &> {log}
+			(/usr/bin/time -v {rtg} vcfeval -b {input.truthset} -c {output.sample_vcf} -t {input.sdf} -o {params.tmp} --squash-ploidy --threads {threads} ) &> {log}
 		elif [ "{wildcards.vartype}" == "sv" ]; then
 			( /usr/bin/time -v {truvari} bench -b {input.truthset} -c {output.sample_vcf} -f {input.reference} -o {params.tmp} --pick multi -r 2000 --no-ref a -C 2000 --passonly) &> {log}
 		fi
@@ -263,5 +273,5 @@ rule prepare_beds:
 	shell:
 		"""
 		sort -k1,1d -k 2,2n -k 3,3n {input.fai} > {output.tmp}
-		bedtools complement -i {input.bed} -g {output.tmp} > {output.bed}
+		{bedtools} complement -i {input.bed} -g {output.tmp} > {output.bed}
 		"""
