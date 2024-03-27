@@ -97,8 +97,8 @@ rule run_kmc:
     input:
         reads = lambda wildcards: reads_leave_one_out[wildcards.sample] if wildcards.coverage == 'full' else "preprocessing/downsampling/{callset}/{coverage}/{sample}_{coverage}.fa"
     output:
-        suf=temp("genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.kmc_suf"),
-        pre=temp("genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.kmc_pre")
+        suf="genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.kmc_suf",
+        pre="genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.kmc_pre"
     log:
         "logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}_kmc.log"
     params:
@@ -125,8 +125,8 @@ rule create_bloomfilter:
         suf = "genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.kmc_suf",
         pre = "genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.kmc_pre"
     output:
-        temp("genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.bloomData"),
-        temp("genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.bloomMeta")
+        "genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.bloomData",
+        "genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.bloomMeta"
     log:
         "logs/genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}_bloom.log"
     params:
@@ -142,7 +142,7 @@ rule create_bloomfilter:
 # create samples file
 rule bayestyper_make_samples_file:
 	output:
-		temp("genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.tsv")
+		"genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}.tsv"
 	params:
 		prefix="genotyping/{callset}/{sample}/bayestyper/{coverage}/temp/kmers/{sample}",
 		sex=lambda wildcards: sex_per_sample[wildcards.sample]

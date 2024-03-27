@@ -1,6 +1,6 @@
-cores: 1
+cores: 28
 latency-wait: 30
-keep-going: False
+keep-going: True
 rerun-incomplete: True
 restart-times: 0
 max-status-checks-per-second: 0.001

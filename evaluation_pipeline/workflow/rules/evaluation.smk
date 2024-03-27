@@ -119,7 +119,7 @@ rule evaluate_with_vcfeval:
 		mem_total_mb=20000,
 		runtime_hrs=0,
 		runtime_min=40
-	threads: 24
+	threads: 28
 	shell:
 		"""
 		{bcftools} view {input.callset} --min-ac 1 | python workflow/scripts/prepare-for-vcfeval.py {input.ref_index} | bgzip -c > {output.fixed_vcf}
@@ -266,7 +266,6 @@ rule collect_results_evaluation_external:
 		"(python workflow/scripts/collect-results.py {wildcards.metric} {wildcards.version} {wildcards.sample} {wildcards.coverage} {wildcards.region} {wildcards.filter} -variants {wildcards.vartype} -folder {params.folder} -outfile {params.outfile}) &> {log}"
 
 
-# plot results of different subsampling runs
 rule plotting_versions_leave1out:
 	input:
 		lambda wildcards: expand("evaluation/{{callset}}/{{sample}}/leave1out/plots/{m}-{version}-{{coverage}}-{{filter}}-{{region}}_{vartype}.tsv", m = wildcards.metric if wildcards.metric != 'untyped' else 'concordance', version=versions_to_run, vartype=vartypes_leave1out)
@@ -286,9 +285,27 @@ rule plotting_versions_leave1out:
 	shell:
 		"(python workflow/scripts/plot-results.py -files {input} -outname {output} -sources {params.sources} -metric {wildcards.metric} -vartypes {params.vartypes}) &> {log}"
 
+rule plotting_versions_external:
+	input:
+		lambda wildcards: expand("evaluation/{{callset}}/{{sample}}/external/plots/{m}-{version}-{{coverage}}-{{filter}}-{{region}}_{vartype}.tsv", m = wildcards.metric if wildcards.metric != 'untyped' else 'concordance', version=versions_to_run, vartype=vartypes_external)
+	output:
+		"evalplots/{callset}/{sample}/external/comparison-versions/{metric}-{coverage}-{filter}-{region}.pdf"
+	wildcard_constraints:
+		metric="concordance|precision-recall|untyped",
+		regions="bi|multi|all",
+		filter="typable|all"
+	log:
+		"logs/evalplots/{callset}/{sample}/external/comparison-versions/{metric}-{coverage}-{filter}-{region}.log"
+	conda:
+		"../envs/genotyping.yml"
+	params:
+		sources = lambda wildcards: ' '.join([v + '-' + wildcards.coverage + '-' + wildcards.filter + '-' + wildcards.region for v in versions_to_run]),
+		vartypes = vartypes_external
+	shell:
+		"(python workflow/scripts/plot-results.py -files {input} -outname {output} -sources {params.sources} -metric {wildcards.metric} -vartypes {params.vartypes}) &> {log}"
 
 
-# plot results of different subsampling runs, comparing concordance and typed variants per sample
+
 rule plotting_versions_conc_vs_untyped_leave1out:
 	input:
 		lambda wildcards: expand("evaluation/{{callset}}/{{sample}}/leave1out/plots/concordance-{version}-{{coverage}}-{{filter}}-{{region}}_{vartype}.tsv", version=versions_to_run, vartype=vartypes_leave1out)
@@ -305,6 +322,25 @@ rule plotting_versions_conc_vs_untyped_leave1out:
 	params:
 		sources = lambda wildcards: ' '.join([v + '-' + wildcards.coverage + '-' + wildcards.filter + '-' + wildcards.region for v in versions_to_run]),
 		vartypes = vartypes_leave1out
+	shell:
+		"(python workflow/scripts/plot-results.py -files {input} -outname {output} -sources {params.sources} -metric concordance-vs-untyped -vartypes {params.vartypes}) &> {log}"
+		
+rule plotting_versions_conc_vs_untyped_external:
+	input:
+		lambda wildcards: expand("evaluation/{{callset}}/{{sample}}/external/plots/concordance-{version}-{{coverage}}-{{filter}}-{{region}}_{vartype}.tsv", version=versions_to_run, vartype=vartypes_external)
+	output:
+		"evalplots/{callset}/{sample}/external/comparison-versions/concordance-vs-untyped-{coverage}-{filter}-{region}.pdf"
+		# "results/leave-one-out/{callset}/plots/comparison-versions/concordance-vs-untyped/concordance-vs-untyped_{coverage}_{regions}.pdf"
+	wildcard_constraints:
+		region="bi|multi|all",
+		filter="typable|all"
+	conda:
+		"../envs/genotyping.yml"
+	log:
+		"logs/evalplots/{callset}/{sample}/external/comparison-versions/concordance-vs-untyped-{coverage}-{filter}-{region}.log"
+	params:
+		sources = lambda wildcards: ' '.join([v + '-' + wildcards.coverage + '-' + wildcards.filter + '-' + wildcards.region for v in versions_to_run]),
+		vartypes = vartypes_external
 	shell:
 		"(python workflow/scripts/plot-results.py -files {input} -outname {output} -sources {params.sources} -metric concordance-vs-untyped -vartypes {params.vartypes}) &> {log}"
 		
