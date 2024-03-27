@@ -1,5 +1,6 @@
 [preciseHopper]
-graphgens
+preciseHopper1
+preciseHopper2
 
 [denbi_vms:children]
 preciseHopper
