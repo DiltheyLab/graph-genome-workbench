@@ -1,5 +1,5 @@
 master:
-  ip: 192.168.0.220
+  ip: 192.168.0.135
 nfs_mounts:
 - src: /vol/whopper
   dst: /vol/whopper

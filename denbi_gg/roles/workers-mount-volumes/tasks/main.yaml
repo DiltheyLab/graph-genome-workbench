@@ -19,6 +19,7 @@
     mode: 0777
   with_items:
       - "{{ nfs_mounts }}"
+  become: true
 
 - name: Mount shares
   mount:
@@ -28,3 +29,4 @@
     state: mounted
   with_items:
     - "{{ nfs_mounts }}"
+  become: true

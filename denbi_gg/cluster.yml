@@ -1,0 +1,12 @@
+---
+- name: Install software in master node
+  hosts: masternode
+  roles:
+    - albertodescalzo.kirgenotyping # this role containes mamba, snakemake, samtools, minimap and jellyfish
+    # - master-mount-volumes
+- name: Install software in worker nodes
+  hosts: workers
+  roles:
+    - albertodescalzo.pangenotyping # this role contains the pangenotyping tools we'll use in the pipeline
+    # - workers-mount-volumes
+...

@@ -1,5 +1,6 @@
 ---
 - hosts: denbi_vms
   roles:
-    - Pangenotyping
+    - albertodescalzo.pangenotyping
+    #- albertodescalzo.pangenomics
 ...
