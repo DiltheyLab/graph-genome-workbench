@@ -7,7 +7,7 @@ import argparse
 
 def extract_resources(filename):
 	cpu_time = 0.0
-	max_rss = 0.0
+	highest_max_rss = 0.0
 	wallclock_time = 0.0
 	for line in open(filename, 'r'):
 		fields = line.strip().split()
@@ -15,8 +15,10 @@ def extract_resources(filename):
 			cpu_time += float(fields[-1])
 		elif line.strip().startswith("System time (seconds):"):
 			cpu_time += float(fields[-1])
-		elif line.strip().startswith("Maximum resident set version (kbytes):"):
+		elif line.strip().startswith("Maximum resident set size (kbytes):"):
 			max_rss = int(fields[-1])
+			if highest_max_rss < max_rss:
+				highest_max_rss = max_rss
 		elif line.strip().startswith("Elapsed (wall clock) time"):
 			times = [f for f in fields[-1].split(':')]
 			wallclock_time += int(float(times[-1])) + 60.0 * int(float(times[-2]))
@@ -24,7 +26,7 @@ def extract_resources(filename):
 				wallclock_time += int(float(times[-3])) * 3600.0
 		else:
 			continue
-	return wallclock_time, max_rss, cpu_time
+	return wallclock_time, highest_max_rss, cpu_time
 
 
 def plot_resources(files, outname, samples, versions):

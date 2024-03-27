@@ -24,9 +24,9 @@ def parse_precision_recall(filename):
 			fields = line.strip().split()
 			assert len(fields) == 8
 			assert fields[0] == 'None'
-			precision = float(fields[5]) if isinstance(fields[5], (int, float))  else 0.0
-			recall = float(fields[6]) if isinstance(fields[6], (int, float)) else 0.0
-			fscore = float(fields[7]) if isinstance(fields[7], (int, float)) else 0.0
+			precision = float(fields[5]) if fields[5] != 'None'  else 0.0
+			recall = float(fields[6]) if fields[6] != 'None' else 0.0
+			fscore = float(fields[7]) if fields[7] != 'None' else 0.0
 			for k in [precision, recall, fscore]:
 				k = 0.0 if math.isnan(k) else k
 	assert precision is not None
