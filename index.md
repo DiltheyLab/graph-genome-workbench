@@ -30,7 +30,6 @@ This is a list of software that is being installed when you use this image. If y
 | [SnpEff](https://netcologne.dl.sourceforge.net/project/snpeff) | `java -jar /home/ubuntu/snpEff/snpEff.jar` |
 | [ClinEff](https://netcologne.dl.sourceforge.net/project/snpeff) | `java -jar /home/ubuntu/clinEff/ClinEff.jar`  |
 | [Gfaffix](https://github.com/marschall-lab/GFAffix) | `gfaffix` |
-| [Novograph](https://github.com/NCBI-Hackathons/NovoGraph) |  |
 
 All software with exception of cactus is available directly from the command line. You can see all executables in `/usr/local/bin/`. Cactus has its own environment because it comes packaged with its own version of some of the software in the list. In order to use cactus and the versions of the software that cactus relies on, activate the conda environment `conda activate cactus`.
 
