@@ -47,6 +47,9 @@ There is a possibility to execute the pipeline in a SLURM cluster. After being g
 
 To do so and have a ready cluster, follow these steps:
 - Create the SSH connections to your master and workers nodes
-- Modify the categories `[masternode] and [workers]` in `inventory` with your hostnames 
+- Modify the categories `[masternode] and [workers]` in `inventory` with your hostnames
+- Download the roles that you want to install from Ansible-Galaxy. E.g. `albertodescalzo.kirgenotyping` and `albertodescalzo.pangenotyping`
+- Create & Attach volumes from the de.NBI portal website and mount them **in the master node**. To do so, log in into the terminal's VM and run `sudo mkdir -p /vol/whopper && sudo mount /dev/vdb /vol/whopper`
+- Change volume paths in both [variable files master](https://github.com/DiltheyLab/graph-genome-workbench/tree/master/denbi_gg/roles/master-mount-volumes/vars/main.yaml) and [variable files workers](https://github.com/DiltheyLab/graph-genome-workbench/tree/master/denbi_gg/roles/workers-mount-volumes/vars/main.yaml). Additionally, adapt the IP address of master node (this can be found by running: `cat playbook/vars/instances.yml` in the master-node's terminal).
 - Uncomment the line corresponding to your role in `cluster.yaml`
 - Run: `ansible-playbook cluster.yaml`
