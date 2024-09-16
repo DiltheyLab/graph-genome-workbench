@@ -20,4 +20,7 @@ The playbook was tested in deNBI (Deutsches Netzwerk für Bioinformatik-Infrastr
 - Ubuntu 20.04
 - Ubuntu 22.04
 
+## Acknowledgements
+Funding provided by the BMBF - Förderkennzeichen 031L0184B.
+
 
