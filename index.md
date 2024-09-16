@@ -35,3 +35,5 @@ All software with exception of cactus is available directly from the command lin
 
 Bandage and IGV are GUI software. This playbook also installs an X-server which can be used via ssh when you provide the `-X` parameter.
 
+## Acknowledgements
+Funding provided by the BMBF - Förderkennzeichen 031L0184B.
